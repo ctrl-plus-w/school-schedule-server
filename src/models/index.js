@@ -1,21 +1,26 @@
 import database from '../database';
 
 import EventModel from './EventModel';
+import EventOptions from './EventOptions';
+
 import LabelModel from './LabelModel';
-import LabelPermissionModel from './LabelPermissionModel';
+import LabelOptions from './LabelOptions';
+
 import RoleModel from './RoleModel';
+import RoleOptions from './RoleOptions';
+
 import SubjectModel from './SubjectModel';
+import SubjectOptions from './SubjectOptions';
+
 import UserModel from './UserModel';
-import UserLabelModel from './UserLabelModel';
+import UserOptions from './UserOptions';
 
-export const Event = database.define('Event', EventModel);
+export const Event = database.define('Event', EventModel, EventOptions);
 
-export const Label = database.define('Label', LabelModel);
-export const LabelPermission = database.define('LabelPermission', LabelPermissionModel);
+export const Label = database.define('Label', LabelModel, LabelOptions);
 
-export const Role = database.define('Role', RoleModel);
+export const Role = database.define('Role', RoleModel, RoleOptions);
 
-export const Subject = database.define('Subject', SubjectModel);
+export const Subject = database.define('Subject', SubjectModel, SubjectOptions);
 
-export const User = database.define('User', UserModel);
-export const UserLabel = database.define('UserLabel', UserLabelModel);
+export const User = database.define('User', UserModel, UserOptions);

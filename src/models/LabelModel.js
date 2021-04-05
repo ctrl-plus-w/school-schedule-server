@@ -1,9 +1,9 @@
 import { DataTypes } from 'sequelize';
 
 const LabelModel = {
-  id: { autoIncrement: true, type: DataTypes.INTEGER, allowNull: false, primaryKey: true },
-  label_name: { type: DataTypes.STRING(255), allowNull: false },
-  subject_id: { type: DataTypes.INTEGER, allowNull: false },
+  UUID: { autoIncrement: true, type: DataTypes.INTEGER, allowNull: false, primaryKey: true },
+  LabelName: { type: DataTypes.STRING(255), allowNull: false },
+  // TODO : Relation w/ Subject.
 };
 
 export default LabelModel;
