@@ -1,0 +1,27 @@
+{
+  "name": "school-schedule",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon --exec npm run babel-node src/index.js",
+    "babel-node": "babel-node --presets='@babel/preset-env' --ignore='foo|bar|baz'"
+  },
+  "dependencies": {
+    "apollo-server-express": "^2.22.2",
+    "express": "~4.16.1",
+    "express-graphql": "^0.12.0",
+    "graphql": "^15.5.0",
+    "mysql2": "^2.2.5",
+    "sequelize": "^6.6.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.13.14",
+    "@babel/node": "^7.13.13",
+    "@babel/preset-env": "^7.13.12",
+    "dotenv": "^8.2.0",
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.7",
+    "sequelize-auto": "^0.8.2"
+  }
+}
