@@ -5,6 +5,7 @@ export default (sequelize) => {
     'user',
     {
       id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+      username: { type: DataTypes.STRING(255), allowNull: false },
       full_name: { type: DataTypes.STRING(255), allowNull: false },
       password: { type: DataTypes.STRING(255), allowNull: false },
     },
