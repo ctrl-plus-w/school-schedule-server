@@ -8,6 +8,7 @@ import labelDefiner from './models/label.model';
 import roleDefiner from './models/role.model';
 import subjectDefiner from './models/subject.model';
 import userDefiner from './models/user.model';
+import userLabelsDefiner from './models/user_labels.model';
 
 const sequelize = new Sequelize(config.DB_NAME, config.DB_USER, config.DB_PASSWORD, {
   host: 'localhost',
@@ -22,6 +23,7 @@ labelDefiner(sequelize);
 roleDefiner(sequelize);
 subjectDefiner(sequelize);
 userDefiner(sequelize);
+userLabelsDefiner(sequelize);
 
 setRelations(sequelize);
 
