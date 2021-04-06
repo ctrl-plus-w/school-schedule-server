@@ -5,7 +5,13 @@ import morgan from 'morgan';
 import config from './config';
 import database from './database';
 
+import isAuth from './middlewares/is-auth';
+
 import { resolvers, typeDefs } from './graphql/schema';
+
+const syncDatabase = async (sync) => {
+  if (sync) await database.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true }).then(() => database.sync({ force: true }));
+};
 
 (async () => {
   const app = express();
@@ -14,11 +20,13 @@ import { resolvers, typeDefs } from './graphql/schema';
   app.use(morgan('dev'));
   app.use(express.json());
 
+  app.use(isAuth);
+
   const server = new ApolloServer({ typeDefs, resolvers });
   server.applyMiddleware({ app });
 
   // Sync database.
-  // await database.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true }).then(() => database.sync({ force: true }));
+  await syncDatabase(false);
 
   // Start server.
   const PORT = config.PORT || 5000;
