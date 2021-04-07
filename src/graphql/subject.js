@@ -33,7 +33,7 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     subject: async (_, args) => {
-      const subject = await database.models.subject.findOne({ where: { id: args.id } });
+      const subject = await database.models.subject.findByPk(args.id);
       return subject ? getTableWithUsers(subject) : null;
     },
 
@@ -52,7 +52,7 @@ export const resolvers = {
     },
 
     destroySubjectById: async (_, args) => {
-      const subject = await database.models.subject.findOne({ where: { id: args.subject_id } });
+      const subject = await database.models.subject.findByPk(args.subject_id);
       if (!subject) throw new Error("Subject does't exist.");
 
       await subject.destroy();

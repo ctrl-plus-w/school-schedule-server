@@ -32,7 +32,7 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     role: async (_, args) => {
-      const role = await database.models.role.findOne({ where: { id: args.id } });
+      const role = await database.models.role.findByPk(args.id);
       return getTableWithUsers(role);
     },
 
@@ -51,7 +51,7 @@ export const resolvers = {
     },
 
     destroyRoleById: async (_, args) => {
-      const role = await database.models.role.findOne({ where: { id: args.role_id } });
+      const role = await database.models.role.findByPk(args.role_id);
       if (!role) throw new Error("Role does't exist.");
 
       await role.destroy();

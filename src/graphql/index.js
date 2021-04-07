@@ -8,7 +8,7 @@ import { typeDefs as Role, resolvers as roleResolvers } from './role';
 import { typeDefs as Subject, resolvers as subjectResolvers } from './subject';
 import { typeDefs as Event, resolvers as eventResolvers } from './event';
 
-// TODO : Study testing and apply it on the server.
+// TODO : [ ] Study testing and apply it on the server.
 
 const Query = gql`
   type Query {

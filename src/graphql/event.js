@@ -46,34 +46,29 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     event: async (_, args) => {
-      const event = await database.models.event.findOne({
-        where: { id: args.id },
-        include: [database.models.label, database.models.subject, database.models.user],
-      });
-
+      const event = await database.models.event.findByPk(args.id);
       return eventObject(event);
     },
 
     events: async () => {
-      const events = await database.models.event.findAll({ include: [database.models.label, database.models.subject, database.models.user] });
+      const events = await database.models.event.findAll();
       return events.map(eventObject);
     },
   },
 
   Mutation: {
-    // TODO : Verify permissions of user when creating the event (subject owning etc...)
-    // TODO : Set relation mapping.
+    // TODO : [ ] Verify permissions of user when creating the event (subject owning etc...)
 
     createEventById: async (_, { input: args }) => {
       const startDate = new Date(args.start);
 
-      const user = await database.models.user.findOne({ where: { id: args.user_id } });
+      const user = await database.models.user.findByPk(args.user_id);
       if (!user) throw new Error("User does't exist.");
 
-      const label = await database.models.label.findOne({ where: { id: args.label_id } });
+      const label = await database.models.label.findByPk(args.label_id);
       if (!label) throw new Error("Label does't exist.");
 
-      const subject = await database.models.subject.findOne({ where: { id: args.subject_id } });
+      const subject = await database.models.subject.findByPk(args.subject_id);
       if (!subject) throw new Error("Subject does't exist.");
 
       const event = await database.models.event.create({

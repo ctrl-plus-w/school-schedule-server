@@ -34,12 +34,12 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     label: async (_, args) => {
-      const label = await database.models.label.findOne({ where: { id: args.id } });
+      const label = await database.models.label.findByPk(args.id);
       return getTableWithUsers(label);
     },
 
     labels: async () => {
-      const labels = await database.models.label.findAll({ include: [{ model: database.models.user }] });
+      const labels = await database.models.label.findAll();
       return labels.map(getTableWithUsers);
     },
   },
@@ -53,7 +53,7 @@ export const resolvers = {
     },
 
     destroyLabelById: async (_, args) => {
-      const label = await database.models.label.findOne({ where: { id: args.id } });
+      const label = await database.models.label.findByPk(args.id);
       if (!label) throw new Error("Label doesn't exist.");
 
       await label.destroy();
@@ -61,7 +61,7 @@ export const resolvers = {
     },
 
     destroyLabelByName: async (_, args) => {
-      const label = await database.models.label.findOne({ where: { id: args.label_name } });
+      const label = await database.models.label.findOne({ where: { label_name: args.label_name } });
       if (!label) throw new Error("Label doesn't exist.");
 
       await label.destroy();

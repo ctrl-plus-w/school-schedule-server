@@ -8,7 +8,7 @@ export const getTableWithUsers = (table) => ({
 
 export const userObject = (user) => ({
   ...user.toJSON(),
-  ...getDates(table),
+  ...getDates(user),
   subjects: () => getSubjects(user),
   role: () => getRole(user),
   labels: () => getLabels(user),
@@ -16,7 +16,7 @@ export const userObject = (user) => ({
 
 export const eventObject = (event) => ({
   ...event.toJSON(),
-  ...getDates(table),
+  ...getDates(event),
   owner: () => getUser(event),
   label: () => getLabel(event),
   subject: () => getSubject(event),
