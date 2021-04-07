@@ -47,12 +47,16 @@ export const resolvers = {
   Query: {
     event: async (_, args) => {
       const event = await database.models.event.findOne({ where: { id: args.id }, include: [database.models.label, database.models.subject] });
-      return formatDbObject(event);
+      return {
+        ...formatDbObject(event),
+      };
     },
 
     events: async () => {
       const events = await database.models.event.findAll({ include: [database.models.label, database.models.subject] });
-      return events.map(formatDbObject);
+      return events.map((e) => ({
+        ...formatDbObject(e),
+      }));
     },
   },
 
@@ -71,11 +75,7 @@ export const resolvers = {
       const subject = await database.models.subject.findOne({ where: { id: args.subject_id } });
       if (!subject) throw new Error("Subject does't exist.");
 
-      const createdEvent = await database.models.event.create({
-        start: startDate,
-        link: args.link ? args.link : '',
-      });
-
+      const createdEvent = await database.models.event.create({ start: startDate, link: args.link ? args.link : '' });
       return formatDbObject(createdEvent);
     },
 

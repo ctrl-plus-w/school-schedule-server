@@ -1,9 +1,10 @@
 import { gql } from 'apollo-server-core';
-import { red } from 'chalk';
 
 import bcrypt from 'bcrypt';
 
 import { formatDbObject } from '../utils/utils';
+import { getSubjects, getRole, userObject, getLabels } from '../utils/relationMapper';
+
 import database from '../database';
 
 export const typeDefs = gql`
@@ -55,66 +56,16 @@ export const typeDefs = gql`
   }
 `;
 
-// TODO : Move relation mapper to a utils file a optimize the code.
-
-const getLabels = async (user) => {
-  const labels = await user.getLabels();
-  if (!labels) return [];
-
-  return labels.map((l) => ({
-    ...l.toJSON(),
-    users: () => getUsers(l),
-  }));
-};
-
-const getRole = async (user) => {
-  const role = await user.getRole();
-  if (!role) return null;
-
-  return { ...role.toJSON(), users: () => getUsers(role) };
-};
-
-const getSubjects = async (user) => {
-  const subjects = await user.getSubjects();
-  if (!subjects) return [];
-
-  return subjects.map((s) => ({ ...s.toJSON(), users: () => getUsers(s) }));
-};
-
-const getUsers = async (label) => {
-  const users = await label.getUsers();
-  if (!users) return [];
-
-  return users.map((u) => ({
-    ...u.toJSON(),
-    role: () => getRole(u),
-    labels: () => getLabels(u),
-    subjects: () => getSubjects(u),
-  }));
-};
-
 export const resolver = {
   Query: {
     user: async (_, args) => {
       const user = await database.models.user.findOne({ where: { username: args.id } });
-      if (!user) return null;
-
-      return {
-        ...formatDbObject(user),
-        labels: () => getLabels(user),
-        role: () => getRole(user),
-        subjects: () => getSubjects(user),
-      };
+      return user ? userObject(user) : null;
     },
 
     users: async () => {
       const users = await database.models.user.findAll({ include: [database.models.label, database.models.role, database.models.subject] });
-
-      return users.map((user) => ({
-        ...formatDbObject(user),
-        labels: () => getLabels(user),
-        role: () => getRole(user),
-      }));
+      return users.map(userObject);
     },
   },
 
@@ -127,19 +78,9 @@ export const resolver = {
       if (userExist) throw new Error('User already exist.');
 
       const cryptedPassword = bcrypt.hashSync(args.password, 12);
+      const user = await database.models.user.create({ username: args.username, full_name: args.full_name, password: cryptedPassword });
 
-      const createdUser = await database.models.user.create({
-        username: args.username,
-        full_name: args.full_name,
-        password: cryptedPassword,
-      });
-
-      return {
-        ...formatDbObject(user),
-        labels: () => getLabels(user),
-        role: () => getRole(user),
-        subjects: () => getSubjects(user),
-      };
+      return userObject(user);
     },
 
     destroyUserById: async (_, args) => {

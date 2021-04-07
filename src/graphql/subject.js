@@ -3,6 +3,8 @@ import { gql } from 'apollo-server-core';
 import database from '../database';
 import { formatDbObject } from '../utils/utils';
 
+import { getLabels, getUsers, getRole, getSubjects } from '../utils/relationMapper';
+
 export const typeDefs = gql`
   extend type Query {
     subject(id: ID!): Subject!
@@ -22,6 +24,7 @@ export const typeDefs = gql`
   type Subject {
     id: ID!
     subject_name: String!
+    users: [User!]
     created_at: String!
     updated_at: String
     deleted_at: String
@@ -32,12 +35,12 @@ export const resolvers = {
   Query: {
     subject: async (_, args) => {
       const subject = await database.models.subject.findOne({ where: { id: args.id } });
-      return formatDbObject(subject);
+      return subject ? { ...formatDbObject(subject), users: () => getUsers(subject) } : null;
     },
 
     subjects: async () => {
       const subjects = await database.models.subject.findAll();
-      return subjects.map(formatDbObject);
+      return subjects.map((s) => ({ ...formatDbObject(s), users: () => getUsers(s) }));
     },
   },
   Mutation: {
@@ -45,8 +48,8 @@ export const resolvers = {
       const subjectExist = await database.models.subject.findOne({ where: { subject_name: args.subject_name } });
       if (subjectExist) throw new Error('Subject already exist.');
 
-      const createdSubject = await database.models.subject.create({ subject_name: args.subject_name });
-      return createdSubject;
+      const subject = await database.models.subject.create({ subject_name: args.subject_name });
+      return { ...formatDbObject(subject), users: () => getUsers(subject) };
     },
 
     destroySubjectById: async (_, args) => {
