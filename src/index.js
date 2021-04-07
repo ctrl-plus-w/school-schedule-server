@@ -11,8 +11,9 @@ import isAuth from './middlewares/is-auth';
 import { resolvers, typeDefs } from './graphql';
 
 const syncDatabase = async (config) => {
-  if (config?.sync)
-    await database.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true }).then(() => database.sync(config?.alter ? { alter: true } : { force: true }));
+  if (!config?.sync) return;
+
+  await database.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true }).then(() => database.sync(config?.alter ? { alter: true } : { force: true }));
 
   if (!config?.alter && config?.seed) {
     await database.models.role.bulkCreate([
@@ -75,7 +76,13 @@ const syncDatabase = async (config) => {
 
   app.use(isAuth);
 
-  // TODO : [ ] Handle user delete and destroy.
+  // TODO : [-] Handle user delete and destroy. (don't forget to fetch only records where deleted_at is null)
+  //            - [x] event
+  //            - [ ] label
+  //            - [ ] role
+  //            - [ ] subject
+  //            - [ ] user
+
   // TODO : [x] Verify if { include: [...models] } is compulsary on queries.
   // TODO : [x] Transform query with { where: { id: __ }} to findByPK.
   // TODO : [ ] Set permissions levels, base 10.
@@ -86,9 +93,9 @@ const syncDatabase = async (config) => {
 
   // Sync database.
   await syncDatabase({
-    sync: true,
-    alter: true,
-    seed: false,
+    sync: false,
+    alter: false,
+    seed: true,
   });
 
   // Start server.

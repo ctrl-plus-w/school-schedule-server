@@ -1,5 +1,5 @@
 export default async (sequelize) => {
-  const { event, label, role, subject, user, user_labels, user_subjects } = sequelize.models;
+  const { event, label, role, subject, user, user_labels, user_subjects, user_subjects_owners  } = sequelize.models;
 
   // User / Label relation.
   label.belongsToMany(user, { through: user_labels, foreignKey: 'label_id', otherKey: 'user_id' });

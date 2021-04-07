@@ -9,11 +9,18 @@ export const typeDefs = gql`
   extend type Query {
     event(id: ID!): Event
     events: [Event!]
+    allEvents: [Event!]
   }
 
   extend type Mutation {
     createEventById(input: EventInputById): Event
     createEventByName(input: EventInputByName): Event
+
+    deleteEventById(user_id: ID!, event_id: ID!): Boolean
+    deleteEventByName(username: ID!, event_id: ID!): Boolean
+
+    destroyEventById(user_id: ID!, event_id: ID!): Boolean
+    destroyEventByName(username: ID!, event_id: ID!): Boolean
   }
 
   input EventInputById {
@@ -51,11 +58,16 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     event: async (_, args) => {
-      const event = await database.models.event.findByPk(args.id);
+      const event = await database.models.event.findByPk(args.id, { where: { deleted_at: null } });
       return eventObject(event);
     },
 
     events: async () => {
+      const events = await database.models.event.findAll({ where: { deleted_at: null } });
+      return events.map(eventObject);
+    },
+
+    allEvents: async () => {
       const events = await database.models.event.findAll();
       return events.map(eventObject);
     },
@@ -63,7 +75,7 @@ export const resolvers = {
 
   Mutation: {
     // TODO : [x] Verify permissions of user when creating the event (subject owning etc...)
-    // TODO : [ ] Set the role detection into the jwt and the request.
+    // TODO : [ ] Set the user & role detection into the jwt and the request.
     // TODO : [ ] Verify if there is already a class for this label at this time.
     // TODO : [ ] Redefined error messages.
 
@@ -135,6 +147,25 @@ export const resolvers = {
       await event.setUser(user);
 
       return eventObject(event);
+    },
+
+    // TODO : For delete and destroy, do it if the permission is admin.
+
+    deleteEventById: async (_, args) => {
+      const user = await database.models.user.findByPk(args.user_id);
+      if (!user) throw new Error("User doesn't exist.");
+
+      const event = await database.models.event.findByPk(args.event_id, { include: database.models.user });
+      if (!event) throw new Error("Event doesn't exist.");
+
+      const userIsOwner = event.toJSON().user.id === user.toJSON().id;
+      if (!userIsOwner) throw new Error('User must be the owner of the event.');
+
+      await event.update({
+        deleted_at: new Date(),
+      });
+
+      return true;
     },
   },
 };
