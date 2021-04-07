@@ -21,7 +21,7 @@ export const resolvers = {
   Query: {
     login: async (_, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username } });
-      if (!user) throw new Error("User doesn't exists.");
+      if (!user) throw new Error("User doesn't exist.");
 
       console.log(user);
 
