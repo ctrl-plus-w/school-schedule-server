@@ -28,17 +28,9 @@ export const resolvers = {
       const isPasswordValid = await bcrypt.compare(args.password, user.password);
       if (!isPasswordValid) throw new Error('Password is invalid.');
 
-      const token = jwt.sign(
-        {
-          user_id: user.id,
-          username: user.username,
-          full_name: user.full_name,
-        },
-        config.JWT_KEY,
-        {
-          expiresIn: `${config.JWT_TOKEN_EXPIRATION}h`,
-        }
-      );
+      const token = jwt.sign({ user_id: user.id, username: user.username, full_name: user.full_name }, config.JWT_KEY, {
+        expiresIn: `${config.JWT_TOKEN_EXPIRATION}h`,
+      });
 
       return {
         id: user.id,

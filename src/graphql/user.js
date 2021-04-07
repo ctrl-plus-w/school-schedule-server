@@ -1,10 +1,7 @@
 import { gql } from 'apollo-server-core';
-
 import bcrypt from 'bcrypt';
 
-import { formatDbObject } from '../utils/utils';
-import { getSubjects, getRole, userObject, getLabels } from '../utils/relationMapper';
-
+import { userObject } from '../utils/relationMapper';
 import database from '../database';
 
 export const typeDefs = gql`

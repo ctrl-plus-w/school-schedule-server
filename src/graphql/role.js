@@ -1,7 +1,7 @@
 import { gql } from 'apollo-server-core';
 
 import database from '../database';
-import { formatDbObject, translateDate } from '../utils/utils';
+import { getTableWithUsers } from '../utils/relationMapper';
 
 export const typeDefs = gql`
   extend type Query {
@@ -29,30 +29,16 @@ export const typeDefs = gql`
   }
 `;
 
-const getRole = async (user) => {
-  const role = await user.getRole();
-  if (!role) return null;
-
-  return { ...role, users: () => getUsers(role) };
-};
-
-const getUsers = async (role) => {
-  const users = await role.getUsers();
-  if (!users) return [];
-
-  return users.map((user) => ({ ...user, role: () => getRole(user) }));
-};
-
 export const resolvers = {
   Query: {
     role: async (_, args) => {
       const role = await database.models.role.findOne({ where: { id: args.id } });
-      return { ...formatDbObject(role), users: () => getUsers(role) };
+      return getTableWithUsers(role);
     },
 
     roles: async () => {
       const roles = await database.models.role.findAll();
-      return roles.map((role) => ({ ...formatDbObject(role), users: () => getUsers(role) }));
+      return roles.map(getTableWithUsers);
     },
   },
   Mutation: {
@@ -60,8 +46,8 @@ export const resolvers = {
       const roleExist = await database.models.role.findOne({ where: { role_name: args.role_name } });
       if (roleExist) throw new Error('Role already exist');
 
-      const createdRole = await database.models.role.create({ role_name: args.role_name });
-      return createdRole;
+      const role = await database.models.role.create({ role_name: args.role_name });
+      return getTableWithUsers(role);
     },
 
     destroyRoleById: async (_, args) => {

@@ -1,7 +1,7 @@
 import { gql } from 'apollo-server-core';
 
 import database from '../database';
-import { formatDbObject } from '../utils/utils';
+import { formatDbObject } from '../utils/date';
 
 export const typeDefs = gql`
   extend type Query {
@@ -62,6 +62,7 @@ export const resolvers = {
 
   Mutation: {
     // TODO : Verify permissions of user when creating the event (subject owning etc...)
+    // TODO : Set relation mapping.
 
     createEventById: async (_, { input: args }) => {
       const startDate = new Date(args.start);

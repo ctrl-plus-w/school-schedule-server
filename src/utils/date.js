@@ -1,3 +1,8 @@
+export const dateToString = (date) => {
+  if (!date) return null;
+  return new Date(date).toISOString();
+};
+
 export const translateDate = (dbObject) => {
   if (!'created_at' in dbObject || !'updated_at' in dbObject || !'deleted_at' in dbObject)
     return { created_at: null, updated_at: null, deleted_at: null };

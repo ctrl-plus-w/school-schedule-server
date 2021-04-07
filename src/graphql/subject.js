@@ -1,9 +1,8 @@
 import { gql } from 'apollo-server-core';
 
 import database from '../database';
-import { formatDbObject } from '../utils/utils';
 
-import { getLabels, getUsers, getRole, getSubjects } from '../utils/relationMapper';
+import { getTableWithUsers } from '../utils/relationMapper';
 
 export const typeDefs = gql`
   extend type Query {
@@ -35,12 +34,12 @@ export const resolvers = {
   Query: {
     subject: async (_, args) => {
       const subject = await database.models.subject.findOne({ where: { id: args.id } });
-      return subject ? { ...formatDbObject(subject), users: () => getUsers(subject) } : null;
+      return subject ? getTableWithUsers(subject) : null;
     },
 
     subjects: async () => {
       const subjects = await database.models.subject.findAll();
-      return subjects.map((s) => ({ ...formatDbObject(s), users: () => getUsers(s) }));
+      return subjects.map(getTableWithUsers);
     },
   },
   Mutation: {
@@ -49,7 +48,7 @@ export const resolvers = {
       if (subjectExist) throw new Error('Subject already exist.');
 
       const subject = await database.models.subject.create({ subject_name: args.subject_name });
-      return { ...formatDbObject(subject), users: () => getUsers(subject) };
+      return getTableWithUsers(subject);
     },
 
     destroySubjectById: async (_, args) => {
