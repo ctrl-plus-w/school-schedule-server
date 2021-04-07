@@ -10,10 +10,11 @@ import isAuth from './middlewares/is-auth';
 
 import { resolvers, typeDefs } from './graphql';
 
-const syncDatabase = async (sync, alter, seed) => {
-  if (sync) await database.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true }).then(() => database.sync(alter ? { alter: true } : { force: true }));
+const syncDatabase = async (config) => {
+  if (config?.sync)
+    await database.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true }).then(() => database.sync(config?.alter ? { alter: true } : { force: true }));
 
-  if (!alter && seed) {
+  if (!config?.alter && config?.seed) {
     await database.models.role.bulkCreate([
       { role_name: 'Élève' },
       { role_name: 'Enseignant' },
@@ -84,7 +85,11 @@ const syncDatabase = async (sync, alter, seed) => {
   server.applyMiddleware({ app });
 
   // Sync database.
-  await syncDatabase(true, false, true);
+  await syncDatabase({
+    sync: true,
+    alter: true,
+    seed: false,
+  });
 
   // Start server.
   const PORT = config.PORT || 5000;

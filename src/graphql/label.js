@@ -17,13 +17,11 @@ export const typeDefs = gql`
 
   input LabelInput {
     label_name: String!
-    # label_display_name: String!
   }
 
   type Label {
     id: ID!
     label_name: String!
-    # label_display_name: String!
     users: [User!]
     created_at: String!
     updated_at: String

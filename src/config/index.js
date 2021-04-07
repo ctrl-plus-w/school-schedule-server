@@ -11,6 +11,10 @@ const config = {
 
   JWT_KEY: process.env.JWT_KEY,
   JWT_TOKEN_EXPIRATION: 1,
+
+  ROLES: {
+    PROFESSOR: 'Enseignant',
+  },
 };
 
 export default config;
