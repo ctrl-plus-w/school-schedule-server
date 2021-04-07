@@ -11,13 +11,7 @@ import userDefiner from './models/user.model';
 import userLabelsDefiner from './models/user_labels.model';
 import userSubjectsDefiner from './models/user_subjects.model';
 
-const sequelize = new Sequelize(config.DB_NAME, config.DB_USER, config.DB_PASSWORD, {
-  host: 'localhost',
-  dialect: 'mysql',
-  define: {
-    underscored: true,
-  },
-});
+const sequelize = new Sequelize(config.DB_NAME, config.DB_USER, config.DB_PASSWORD, { host: 'localhost', dialect: 'mysql' });
 
 eventDefiner(sequelize);
 labelDefiner(sequelize);

@@ -74,6 +74,10 @@ const syncDatabase = async (sync, alter, seed) => {
 
   app.use(isAuth);
 
+  // TODO : Handle user delete and destroy.
+  // TODO : Make relation mapping of events.
+  // TODO : Verify if { include: [...models] } is compulsary on queries.
+
   // Graphql
   const server = new ApolloServer({ typeDefs, resolvers });
   server.applyMiddleware({ app });

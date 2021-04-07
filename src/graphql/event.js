@@ -1,7 +1,7 @@
 import { gql } from 'apollo-server-core';
 
 import database from '../database';
-import { formatDbObject } from '../utils/date';
+import { eventObject } from '../utils/relationMapper';
 
 export const typeDefs = gql`
   extend type Query {
@@ -46,17 +46,17 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     event: async (_, args) => {
-      const event = await database.models.event.findOne({ where: { id: args.id }, include: [database.models.label, database.models.subject] });
-      return {
-        ...formatDbObject(event),
-      };
+      const event = await database.models.event.findOne({
+        where: { id: args.id },
+        include: [database.models.label, database.models.subject, database.models.user],
+      });
+
+      return eventObject(event);
     },
 
     events: async () => {
-      const events = await database.models.event.findAll({ include: [database.models.label, database.models.subject] });
-      return events.map((e) => ({
-        ...formatDbObject(e),
-      }));
+      const events = await database.models.event.findAll({ include: [database.models.label, database.models.subject, database.models.user] });
+      return events.map(eventObject);
     },
   },
 
@@ -76,8 +76,12 @@ export const resolvers = {
       const subject = await database.models.subject.findOne({ where: { id: args.subject_id } });
       if (!subject) throw new Error("Subject does't exist.");
 
-      const createdEvent = await database.models.event.create({ start: startDate, link: args.link ? args.link : '' });
-      return formatDbObject(createdEvent);
+      const event = await database.models.event.create({
+        start: startDate,
+        link: args.link ? args.link : '',
+      });
+
+      return eventObject(event);
     },
 
     createEventByName: async (_, { input: args }) => {
@@ -92,16 +96,12 @@ export const resolvers = {
       const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name } });
       if (!subject) throw new Error("Subject does't exist.");
 
-      const createdEvent = await database.models.event.create({ start: startDate, link: args.link ? args.link : '' });
-      await createdEvent.setLabel(label);
-      await createdEvent.setSubject(subject);
+      const event = await database.models.event.create({ start: startDate, link: args.link ? args.link : '' });
+      await event.setLabel(label);
+      await event.setSubject(subject);
+      await event.setUser(user);
 
-      const event = await database.models.event.findOne({
-        where: { id: createdEvent.id },
-        include: [database.models.label, database.models.subject],
-      });
-
-      return formatDbObject(event);
+      return eventObject(event);
     },
   },
 };

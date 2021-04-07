@@ -1,41 +1,58 @@
-import { dateToString } from './date';
-
-// TODO : Optimize 'created_at', 'updated_at' and 'deleted_at' toString function.
+import { getDates } from './date';
 
 export const getTableWithUsers = (table) => ({
   ...table.toJSON(),
-  created_at: dateToString(table.created_at),
-  deleted_at: dateToString(table.deleted_at),
-  updated_at: dateToString(table.updated_at),
+  ...getDates(table),
   users: () => getUsers(table),
 });
 
 export const userObject = (user) => ({
   ...user.toJSON(),
-  created_at: dateToString(user.created_at),
-  deleted_at: dateToString(user.deleted_at),
-  updated_at: dateToString(user.updated_at),
+  ...getDates(table),
   subjects: () => getSubjects(user),
   role: () => getRole(user),
   labels: () => getLabels(user),
 });
 
-export const getLabels = async (user) => {
-  const labels = await user.getLabels();
+export const eventObject = (event) => ({
+  ...event.toJSON(),
+  ...getDates(table),
+  owner: () => getUser(event),
+  label: () => getLabel(event),
+  subject: () => getSubject(event),
+});
+
+const getLabel = async (model) => {
+  const label = await model.getLabel();
+  return label ? getTableWithUsers(label) : null;
+};
+
+const getSubject = async (model) => {
+  const subject = await model.getSubject();
+  return subject ? getTableWithUsers(subject) : null;
+};
+
+const getUser = async (model) => {
+  const user = await model.getUser();
+  return user ? userObject(user) : null;
+};
+
+export const getLabels = async (model) => {
+  const labels = await model.getLabels();
   return labels.map(getTableWithUsers);
 };
 
-export const getRole = async (user) => {
-  const role = await user.getRole();
+export const getRole = async (model) => {
+  const role = await model.getRole();
   return role ? getTableWithUsers(role) : null;
 };
 
-export const getSubjects = async (user) => {
-  const subjects = await user.getSubjects();
+export const getSubjects = async (model) => {
+  const subjects = await model.getSubjects();
   return subjects.map(getTableWithUsers);
 };
 
-export const getUsers = async (table) => {
-  const users = await table.getUsers();
+export const getUsers = async (model) => {
+  const users = await model.getUsers();
   return users.map(userObject);
 };
