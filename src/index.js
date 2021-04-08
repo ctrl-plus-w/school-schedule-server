@@ -1,7 +1,8 @@
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
 import morgan from 'morgan';
-import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import fs from 'fs';
 
 import config from './config';
 import database from './database';
@@ -9,6 +10,7 @@ import database from './database';
 import isAuth from './middlewares/is-auth';
 
 import { resolvers, typeDefs } from './graphql';
+import { truncate } from 'lodash';
 
 const syncDatabase = async (config) => {
   if (!config?.sync) return;
@@ -74,14 +76,7 @@ const syncDatabase = async (config) => {
   app.use(morgan('dev'));
   app.use(express.json());
 
-  app.use(isAuth);
-
   // TODO : [-] Handle user delete and destroy. (don't forget to fetch only records where deleted_at is null)
-  //            - [x] event
-  //            - [x] label
-  //            - [x] role
-  //            - [x] subject
-  //            - [x] user
 
   // TODO : [ ] User is fetched at the beggining of each Mutation.
   // TODO : [ ] When creating something, verify if the unique fields aren't on the deleted_at fields.
@@ -93,7 +88,7 @@ const syncDatabase = async (config) => {
   // TODO : [ ] When deleting a subject, verify if there isn't an event in the user's subjects.
 
   // Graphql
-  const server = new ApolloServer({ typeDefs, resolvers });
+  const server = new ApolloServer({ typeDefs, resolvers, context: isAuth });
   server.applyMiddleware({ app });
 
   // Sync database.

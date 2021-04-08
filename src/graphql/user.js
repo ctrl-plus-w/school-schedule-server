@@ -64,7 +64,9 @@ export const resolver = {
       return user ? userObject(user) : null;
     },
 
-    users: async () => {
+    users: async (parent, args, context) => {
+      console.log(context);
+
       const users = await database.models.user.findAll({ where: { deleted_at: null } });
       return users.map(userObject);
     },

@@ -2,30 +2,26 @@ import jwt from 'jsonwebtoken';
 
 import config from '../config';
 
-export default async (req, res, next) => {
-  const leave = () => {
-    req.isAuth = false;
-    return next();
-  };
-
-  const pass = (id) => {
-    req.isAuth = true;
-    req.user_id = id;
-    return next();
-  };
-
+export default async ({ req }) => {
   const authHeader = await req.get('Authorization');
-  if (!authHeader) return leave();
+  if (!authHeader) return { auth: false };
 
   const token = await authHeader.split(' ')[1];
-  if (!token || token === '') return leave();
+  if (!token || token === '') return { auth: false };
 
   try {
     const decodedToken = jwt.verify(token, config.JWT_KEY);
-    if (!decodedToken) return leave();
+    if (!decodedToken) return { auth: false };
 
-    return pass(decodedToken.user_id);
+    console.log(decodedToken);
+
+    return {
+      auth: true,
+      id: decodedToken.id,
+      username: decodedToken.username,
+      role: decodedToken.role,
+    };
   } catch (err) {
-    return leave();
+    return { auth: false };
   }
 };
