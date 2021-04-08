@@ -65,14 +65,12 @@ export const resolver = {
     },
 
     users: async (parent, args, context) => {
-      console.log(context);
-
       const users = await database.models.user.findAll({ where: { deleted_at: null } });
       return users.map(userObject);
     },
   },
 
-  // TODO : [ ] Get the request to do the autorization.
+  // TODO : [x] Get the request to do the autorization. (inside of the context)
 
   Mutation: {
     /* +---------------------------------------------+ User */

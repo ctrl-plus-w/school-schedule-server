@@ -1,8 +1,7 @@
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
 import morgan from 'morgan';
-import jwt from 'jsonwebtoken';
-import fs from 'fs';
+import cors from 'cors';
 
 import config from './config';
 import database from './database';
@@ -10,7 +9,6 @@ import database from './database';
 import isAuth from './middlewares/is-auth';
 
 import { resolvers, typeDefs } from './graphql';
-import { truncate } from 'lodash';
 
 const syncDatabase = async (config) => {
   if (!config?.sync) return;
@@ -75,6 +73,7 @@ const syncDatabase = async (config) => {
   // Middlewares
   app.use(morgan('dev'));
   app.use(express.json());
+  app.use(cors({ origin: '*' }));
 
   // TODO : [-] Handle user delete and destroy. (don't forget to fetch only records where deleted_at is null)
 
