@@ -78,14 +78,19 @@ const syncDatabase = async (config) => {
 
   // TODO : [-] Handle user delete and destroy. (don't forget to fetch only records where deleted_at is null)
   //            - [x] event
-  //            - [ ] label
-  //            - [ ] role
-  //            - [ ] subject
-  //            - [ ] user
+  //            - [x] label
+  //            - [x] role
+  //            - [x] subject
+  //            - [x] user
+
+  // TODO : [ ] User is fetched at the beggining of each Mutation.
+  // TODO : [ ] When creating something, verify if the unique fields aren't on the deleted_at fields.
 
   // TODO : [x] Verify if { include: [...models] } is compulsary on queries.
   // TODO : [x] Transform query with { where: { id: __ }} to findByPK.
   // TODO : [ ] Set permissions levels, base 10.
+  // TODO : [x] When deleting a label, verify if there isn't an event in the user's labels.
+  // TODO : [ ] When deleting a subject, verify if there isn't an event in the user's subjects.
 
   // Graphql
   const server = new ApolloServer({ typeDefs, resolvers });

@@ -17,6 +17,7 @@ export const userObject = (user) => ({
 export const eventObject = (event) => ({
   ...event.toJSON(),
   ...getDates(event),
+  start: new Date(event.toJSON().start).toISOString(),
   owner: () => getUser(event),
   label: () => getLabel(event),
   subject: () => getSubject(event),

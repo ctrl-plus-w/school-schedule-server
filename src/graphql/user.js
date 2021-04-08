@@ -12,6 +12,10 @@ export const typeDefs = gql`
 
   extend type Mutation {
     createUser(input: UserInput!): User
+
+    deleteUserById(user_id: ID!): Boolean
+    deleteUserByName(username: ID!): Boolean
+
     destroyUserById(user_id: ID!): Boolean
     destroyUserByName(username: ID!): Boolean
 
@@ -56,12 +60,12 @@ export const typeDefs = gql`
 export const resolver = {
   Query: {
     user: async (_, args) => {
-      const user = await database.models.user.findByPk(args.id);
+      const user = await database.models.user.findByPk(args.id, { where: { deleted_at: null } });
       return user ? userObject(user) : null;
     },
 
     users: async () => {
-      const users = await database.models.user.findAll();
+      const users = await database.models.user.findAll({ where: { deleted_at: null } });
       return users.map(userObject);
     },
   },
@@ -70,8 +74,8 @@ export const resolver = {
 
   Mutation: {
     /* +---------------------------------------------+ User */
-    createUser: async (_, { input: args }, req) => {
-      const userExist = await database.models.user.findOne({ where: { username: args.username } });
+    createUser: async (_, { input: args }) => {
+      const userExist = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (userExist) throw new Error('User already exist.');
 
       const cryptedPassword = bcrypt.hashSync(args.password, 12);
@@ -80,8 +84,24 @@ export const resolver = {
       return userObject(user);
     },
 
+    deleteUserById: async (_, args) => {
+      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
+      if (!user) throw new Error('User not found.');
+
+      await user.update({ deleted_at: Date.now() });
+      return true;
+    },
+
+    deleteUserByName: async (_, args) => {
+      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
+      if (!user) throw new Error('User not found.');
+
+      await user.update({ deleted_at: Date.now() });
+      return true;
+    },
+
     destroyUserById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id);
+      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error('User not found.');
 
       await user.destroy();
@@ -89,7 +109,7 @@ export const resolver = {
     },
 
     destroyUserByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username } });
+      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error('User not found.');
 
       await user.destroy();
@@ -98,10 +118,10 @@ export const resolver = {
 
     /* +---------------------------------------------+ Label */
     addLabelById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id);
+      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const label = await database.models.label.findByPk(args.label_id);
+      const label = await database.models.label.findByPk(args.label_id, { where: { deleted_at: null } });
       if (!label) throw new Error("Label doesn't exist.");
 
       await user.addLabel(label);
@@ -109,10 +129,10 @@ export const resolver = {
     },
 
     addLabelByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username } });
+      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const label = await database.models.label.findOne({ where: { label_name: args.label_name } });
+      const label = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null } });
       if (!label) throw new Error("Label doesn't exist.");
 
       await user.addLabel(label);
@@ -120,10 +140,10 @@ export const resolver = {
     },
 
     removeLabelById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id);
+      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const label = await database.models.label.findByPk(args.label_id);
+      const label = await database.models.label.findByPk(args.label_id, { where: { deleted_at: null } });
       if (!label) throw new Error("Label doesn't exist.");
 
       await user.removeLabel(label);
@@ -131,10 +151,10 @@ export const resolver = {
     },
 
     removeLabelByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username } });
+      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const label = await database.models.label.findOne({ where: { label_name: args.label_name } });
+      const label = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null } });
       if (!label) throw new Error("Label doesn't exist.");
 
       await user.removeLabel(label);
@@ -142,7 +162,7 @@ export const resolver = {
     },
 
     clearLabelsById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id);
+      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
       await user.removeLabels();
@@ -150,7 +170,7 @@ export const resolver = {
     },
 
     clearLabelsByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username } });
+      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
       await user.removeLabels();
@@ -159,10 +179,10 @@ export const resolver = {
 
     /* +---------------------------------------------+ Subject */
     addSubjectById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id);
+      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const subject = await database.models.subject.findByPk(args.subject_id);
+      const subject = await database.models.subject.findByPk(args.subject_id, { where: { deleted_at: null } });
       if (!subject) throw new Error("Subject doesn't exist.");
 
       await user.addSubject(subject);
@@ -170,10 +190,10 @@ export const resolver = {
     },
 
     addSubjectByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username } });
+      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name } });
+      const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
       if (!subject) throw new Error("Subject doesn't exist.");
 
       await user.addSubject(subject);
@@ -181,10 +201,10 @@ export const resolver = {
     },
 
     removeSubjectById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id);
+      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const subject = await database.models.subject.findByPk(args.subject_id);
+      const subject = await database.models.subject.findByPk(args.subject_id, { where: { deleted_at: null } });
       if (!subject) throw new Error("Subject doesn't exist.");
 
       await user.removeSubject(subject);
@@ -192,10 +212,10 @@ export const resolver = {
     },
 
     removeSubjectByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username } });
+      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name } });
+      const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
       if (!subject) throw new Error("Subject doesn't exist.");
 
       await user.removeSubject(subject);
@@ -203,7 +223,7 @@ export const resolver = {
     },
 
     clearSubjectsById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id);
+      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
       await user.removeSubjects();
@@ -211,7 +231,7 @@ export const resolver = {
     },
 
     clearSubjectsByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username } });
+      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
       await user.removeSubjects();
@@ -220,10 +240,10 @@ export const resolver = {
 
     /* +---------------------------------------------+ Role */
     setRoleById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id);
+      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const role = await database.models.role.findByPk(args.roleId);
+      const role = await database.models.role.findByPk(args.roleId, { where: { deleted_at: null } });
       if (!role) throw new Error("Role doesn't exist.");
 
       await user.setRole(role);
@@ -231,10 +251,10 @@ export const resolver = {
     },
 
     setRoleByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username } });
+      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error("User doesn't exist.");
 
-      const role = await database.models.role.findOne({ where: { role_name: args.role_name } });
+      const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
       if (!role) throw new Error("Role doesn't exist.");
 
       await user.setRole(role);

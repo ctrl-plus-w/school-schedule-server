@@ -11,6 +11,10 @@ export const typeDefs = gql`
 
   extend type Mutation {
     createRole(input: RoleInput): Role!
+
+    deleteRoleById(role_id: ID!): Boolean
+    deleteRoleByName(role_name: String!): Boolean
+
     destroyRoleById(role_id: ID!): Boolean
     destroyRoleByName(role_name: String!): Boolean
   }
@@ -32,22 +36,38 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     role: async (_, args) => {
-      const role = await database.models.role.findByPk(args.id);
+      const role = await database.models.role.findByPk(args.id, { where: { deleted_at: null } });
       return getTableWithUsers(role);
     },
 
     roles: async () => {
-      const roles = await database.models.role.findAll();
+      const roles = await database.models.role.findAll({ where: { deleted_at: null } });
       return roles.map(getTableWithUsers);
     },
   },
   Mutation: {
     createRole: async (_, { input: args }) => {
-      const roleExist = await database.models.role.findOne({ where: { role_name: args.role_name } });
+      const roleExist = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
       if (roleExist) throw new Error('Role already exist');
 
       const role = await database.models.role.create({ role_name: args.role_name });
       return getTableWithUsers(role);
+    },
+
+    deleteRoleById: async (_, args) => {
+      const role = await database.models.role.findByPk(args.role_id);
+      if (!role) throw new Error("Role does't exist.");
+
+      await role.update({ deleted_at: null });
+      return true;
+    },
+
+    deleteRoleByName: async (_, args) => {
+      const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
+      if (!role) throw new Error("Role does't exist.");
+
+      await role.update({ deleted_at: null });
+      return true;
     },
 
     destroyRoleById: async (_, args) => {
@@ -59,7 +79,7 @@ export const resolvers = {
     },
 
     destroyRoleByName: async (_, args) => {
-      const role = await database.models.role.findOne({ where: { role_name: args.role_name } });
+      const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
       if (!role) throw new Error("Role does't exist.");
 
       await role.destroy();

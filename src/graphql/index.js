@@ -9,6 +9,7 @@ import { typeDefs as Subject, resolvers as subjectResolvers } from './subject';
 import { typeDefs as Event, resolvers as eventResolvers } from './event';
 
 // TODO : [ ] Study testing and apply it on the server.
+// TODO : [ ] Set findAll with { where: { deleted_at: null }}
 
 const Query = gql`
   type Query {
