@@ -9,6 +9,7 @@ import database from './database';
 import isAuth from './middlewares/is-auth';
 
 import { resolvers, typeDefs } from './graphql';
+import { Op } from 'sequelize';
 
 const syncDatabase = async (config) => {
   if (!config?.sync) return;
@@ -73,7 +74,11 @@ const syncDatabase = async (config) => {
   // Middlewares
   app.use(morgan('dev'));
   app.use(express.json());
-  app.use(cors({ origin: '*' }));
+  app.use(
+    cors({
+      origin: '*',
+    })
+  );
 
   // TODO : [-] Handle user delete and destroy. (don't forget to fetch only records where deleted_at is null)
 

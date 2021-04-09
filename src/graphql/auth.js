@@ -6,19 +6,21 @@ import config from '../config';
 import database from '../database';
 
 export const typeDefs = gql`
-  extend type Query {
+  extend type Mutation {
     login(username: String!, password: String!): AuthData!
   }
 
   type AuthData {
     id: ID!
+    role: String!
+    full_name: String!
     token: String!
     token_expiration: Int!
   }
 `;
 
 export const resolvers = {
-  Query: {
+  Mutation: {
     login: async (_, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null }, include: database.models.role });
       if (!user) throw new Error("User doesn't exist.");
@@ -28,9 +30,7 @@ export const resolvers = {
 
       const token = jwt.sign(
         {
-          user_id: user.id,
-          username: user.username,
-          full_name: user.full_name,
+          id: user.id,
           role: { id: user.role.id, role_name: user.role.role_name },
         },
         config.JWT_KEY,
@@ -39,8 +39,12 @@ export const resolvers = {
         }
       );
 
+      const userJSON = user.toJSON();
+
       return {
-        id: user.id,
+        id: userJSON.id,
+        role: userJSON.role.role_name,
+        full_name: userJSON.full_name,
         token: token,
         token_expiration: config.JWT_TOKEN_EXPIRATION,
       };

@@ -14,7 +14,10 @@ export const typeDefs = gql`
   extend type Query {
     event(id: ID!): Event
     events: [Event!]
+
     allEvents: [Event!]
+
+    userEvents: [Event!]
   }
 
   extend type Mutation {
@@ -76,6 +79,21 @@ export const resolvers = {
       const events = await database.models.event.findAll();
       return events.map(eventObject);
     },
+
+    userEvents: async (parent, args, context) => {
+      if (!context?.id) throw new Error('You must be logged in.');
+
+      const startDate = new Date();
+      const endDate = new Date().setDate(new Date().getDate() + 14);
+
+      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.label });
+      if (!user) throw new Error('Username not found.');
+
+      const userLabelIds = user.toJSON().labels.map((label) => label.id);
+
+      const events = await database.models.event.findAll({ where: { label_id: userLabelIds, start: { [Op.between]: [startDate, endDate] } } });
+      return events.map(eventObject);
+    },
   },
 
   Mutation: {
@@ -83,7 +101,8 @@ export const resolvers = {
     // TODO : [ ] Set the user & role detection into the jwt and the request.
     // TODO : [x] Verify if there is already an event for this label at this time.
     // TODO : [ ] Redefined error messages.
-    // TODO : [ ] Check if date is not before today.
+    // TODO : [x] Check if date is not before today.
+    // TODO : [ ] Check if date is a round date. (database collision problems)
 
     createEventById: async (_, { input: args }) => {
       const startDate = moment(args.start);
