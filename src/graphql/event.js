@@ -1,14 +1,13 @@
-import { gql } from 'apollo-server-core';
-import { red } from 'chalk';
+import moment from 'moment';
 
+import { gql } from 'apollo-server-core';
+
+import config from '../config';
 import database from '../database';
 import { eventObject } from '../utils/relationMapper';
 
-import config from '../config';
 import sequelize from '../database';
 import { QueryTypes, Op } from 'sequelize';
-
-import moment from 'moment';
 
 export const typeDefs = gql`
   extend type Query {
@@ -18,6 +17,7 @@ export const typeDefs = gql`
     allEvents: [Event!]
 
     userEvents: [Event!]
+    labelEvents(label_id: ID!): [Event!]
   }
 
   extend type Mutation {
@@ -34,6 +34,7 @@ export const typeDefs = gql`
   input EventInputById {
     start: String!
     link: String
+    description: String!
     obligatory: Boolean!
     user_id: String!
     label_id: String!
@@ -43,6 +44,7 @@ export const typeDefs = gql`
   input EventInputByName {
     start: String!
     link: String
+    description: String!
     obligatory: Boolean!
     username: String!
     label_name: String!
@@ -53,6 +55,7 @@ export const typeDefs = gql`
     id: ID!
     start: String!
     link: String
+    description: String!
     obligatory: Boolean!
     owner: User
     label: Label
@@ -92,6 +95,20 @@ export const resolvers = {
       const userLabelIds = user.toJSON().labels.map((label) => label.id);
 
       const events = await database.models.event.findAll({ where: { label_id: userLabelIds, start: { [Op.between]: [startDate, endDate] } } });
+      return events.map(eventObject);
+    },
+
+    labelEvents: async (parent, args, context) => {
+      if (!context?.id) throw new Error('You must be logged in.');
+
+      const startDate = new Date();
+      const endDate = new Date().setDate(new Date().getDate() + 14);
+
+      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.role });
+      if (!user) throw new Error('Username not found.');
+      if (user?.role?.role_name !== config.ROLES.PROFESSOR) throw new Error("You don't have the permission.");
+
+      const events = await database.models.event.findAll({ where: { label_id: args.label_id, start: { [Op.between]: [startDate, endDate] } } });
       return events.map(eventObject);
     },
   },
@@ -144,10 +161,12 @@ export const resolvers = {
       const event = await database.models.event.create({
         start: startDate.toISOString(),
         link: args.link ? args.link : '',
+        description: args.description,
         obligatory: args.obligatory,
       });
 
       await event.setLabel(label);
+
       await event.setSubject(subject);
       await event.setUser(user);
 
@@ -194,6 +213,7 @@ export const resolvers = {
       const event = await database.models.event.create({
         start: startDate.toISOString(),
         link: args.link ? args.link : '',
+        description: args.description,
         obligatory: args.obligatory,
       });
 
