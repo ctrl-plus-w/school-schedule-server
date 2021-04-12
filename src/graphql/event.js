@@ -17,6 +17,7 @@ export const typeDefs = gql`
     allEvents: [Event!]
 
     userEvents: [Event!]
+    ownedEvents: [Event!]
     labelEvents(label_id: ID!): [Event!]
   }
 
@@ -96,6 +97,19 @@ export const resolvers = {
 
       const events = await database.models.event.findAll({ where: { label_id: userLabelIds, start: { [Op.between]: [startDate, endDate] } } });
       return events.map(eventObject);
+    },
+
+    ownedEvents: async (parent, args, context) => {
+      if (!context?.id) throw new Error('You must be logged in.');
+
+      const startDate = new Date();
+      const endDate = new Date().setDate(new Date().getDate() + 14);
+
+      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.label });
+      if (!user) throw new Error('Username not found.');
+
+      const userOwnedEvents = await database.models.event.findAll({ where: { deleted_at: null, start: { [Op.between]: [startDate, endDate] } } });
+      return userOwnedEvents.map(eventObject);
     },
 
     labelEvents: async (parent, args, context) => {
