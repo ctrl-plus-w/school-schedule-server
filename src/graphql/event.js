@@ -122,10 +122,12 @@ export const resolvers = {
     // TODO : [ ] Check if date is a round date. (database collision problems)
 
     createEventById: async (_, { input: args }) => {
+      if (!context?.id) throw new Error('You must be logged in.');
+
       const startDate = moment(args.start);
       if (startDate.isBefore(moment(Date.now()))) throw new Error('The event cannot be in the past.');
 
-      const user = await database.models.user.findByPk(args.user_id, {
+      const user = await database.models.user.findByPk(context.id, {
         where: { deleted_at: null },
         include: [database.models.role, database.models.subject],
       });
@@ -133,6 +135,13 @@ export const resolvers = {
       if (!user) throw new Error("User does't exist.");
       if (!user.role) throw new Error('User must have a role.');
       if (!user.subjects) throw new Error('User must own at least one subject.');
+
+      const userOwnedEvents = await database.models.event.count({
+        where: { deleted_at: null, start: startDate.toISOString() },
+        include: [{ model: database.models.user, where: { id: context.id } }],
+      });
+
+      if (userOwnedEvents > 0) throw new Error('You already have an event at this time.');
 
       const label = await database.models.label.findByPk(args.label_id, { where: { deleted_at: null }, include: database.models.user });
       if (!label) throw new Error("Label does't exist.");
@@ -173,18 +182,24 @@ export const resolvers = {
       return eventObject(event);
     },
 
-    createEventByName: async (_, { input: args }) => {
+    createEventByName: async (parent, { input: args }, context) => {
       const startDate = moment(args.start);
       if (startDate.isBefore(moment(Date.now()))) throw new Error('The event cannot be in the past.');
 
-      const user = await database.models.user.findOne({
-        where: { username: args.username },
+      const user = await database.models.user.findByPk(context.id, {
         include: [database.models.role, database.models.subject],
       });
 
       if (!user) throw new Error("User does't exist.");
       if (!user.role) throw new Error('User must have a role.');
       if (!user.subjects) throw new Error('User must own at least one subject.');
+
+      const userOwnedEvents = await database.models.event.count({
+        where: { deleted_at: null, start: startDate.toISOString() },
+        include: [{ model: database.models.user, where: { id: context.id } }],
+      });
+
+      if (userOwnedEvents > 0) throw new Error('You already have an event at this time.');
 
       const label = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null }, include: database.models.user });
       if (!label) throw new Error("Label does't exist.");
