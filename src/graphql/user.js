@@ -4,6 +4,8 @@ import bcrypt from 'bcrypt';
 import { userObject } from '../utils/relationMapper';
 import database from '../database';
 
+import config from '../config';
+
 export const typeDefs = gql`
   extend type Query {
     user(id: ID!): User!
@@ -41,6 +43,9 @@ export const typeDefs = gql`
     username: String!
     full_name: String!
     password: String!
+    labels_name: [String!]
+    subjects_name: [String!]
+    role_name: String!
   }
 
   type User {
@@ -50,7 +55,7 @@ export const typeDefs = gql`
     password: String!
     labels: [Label!]
     subjects: [Subject!]
-    role: Role
+    role: Role!
     created_at: String!
     updated_at: String
     deleted_at: String
@@ -64,24 +69,41 @@ export const resolver = {
       return user ? userObject(user) : null;
     },
 
-    users: async (parent, args, context) => {
+    users: async (parent, args) => {
       const users = await database.models.user.findAll({ where: { deleted_at: null } });
       return users.map(userObject);
     },
   },
 
-  // TODO : [x] Get the request to do the autorization. (inside of the context)
-
   Mutation: {
     /* +---------------------------------------------+ User */
-    createUser: async (_, { input: args }) => {
+    createUser: async (parent, { input: args }, context) => {
+      if (!context?.id) throw new Error('You must be logged in.');
+
+      const loggedUser = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.role });
+      if (!loggedUser) throw new Error('You must be logged in.');
+      if (loggedUser?.role?.role_name !== config.ROLES.ADMIN) throw new Error("You don't have the permission.");
+
       const userExist = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (userExist) throw new Error('User already exist.');
 
       const cryptedPassword = bcrypt.hashSync(args.password, 12);
       const user = await database.models.user.create({ username: args.username, full_name: args.full_name, password: cryptedPassword });
 
-      return userObject(user);
+      if (args.labels_name) {
+        const labels = await database.models.label.findAll({ where: { deleted_at: null, label_name: args.labels_name } });
+        await loggedUser.setLabels(labels);
+      }
+
+      if (args.subjects_name) {
+        const subjects = await database.models.subject.findAll({ where: { deleted_at: null, subject_name: args.subjects_name } });
+        await loggedUser.setSubjects(subjects);
+      }
+
+      const role = await database.models.role.findOne({ where: { deleted_at: null, role_name: args.role_name } });
+      await loggedUser.setRole(role);
+
+      return userObject(loggedUser);
     },
 
     deleteUserById: async (_, args) => {

@@ -14,6 +14,8 @@ const config = {
 
   ROLES: {
     PROFESSOR: 'Enseignant',
+    STUDENT: 'Élève',
+    ADMIN: 'Admin',
   },
 };
 
