@@ -34,7 +34,7 @@ export const typeDefs = gql`
     clearSubjectsByName(username: String!): Boolean
 
     setRoleById(user_id: ID!, role_id: ID!): Boolean
-    setRoleByName(username: String!, role_name: ID!): Boolean
+    setRoleByName(username: String!, role_name: String!): Boolean
   }
 
   input UserInput {
