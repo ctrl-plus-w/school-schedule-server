@@ -14,27 +14,27 @@ export const typeDefs = gql`
     createUser(input: UserInput!): User
 
     deleteUserById(user_id: ID!): Boolean
-    deleteUserByName(username: ID!): Boolean
+    deleteUserByName(username: String!): Boolean
 
     destroyUserById(user_id: ID!): Boolean
-    destroyUserByName(username: ID!): Boolean
+    destroyUserByName(username: String!): Boolean
 
     addLabelById(user_id: ID!, label_id: ID!): Boolean
     addLabelByName(username: String!, label_name: String!): Boolean
     removeLabelById(user_id: ID!, label_id: ID!): Boolean
     removeLabelByName(username: String!, label_name: String!): Boolean
     clearLabelsById(user_id: ID!): Boolean
-    clearLabelsByName(username: ID!): Boolean
+    clearLabelsByName(username: String!): Boolean
 
     addSubjectById(user_id: ID!, subject_id: ID!): Boolean
     addSubjectByName(username: String!, subject_name: String!): Boolean
     removeSubjectById(user_id: ID!, subject_id: ID!): Boolean
     removeSubjectByName(username: String!, subject_name: String!): Boolean
     clearSubjectsById(user_id: ID!): Boolean
-    clearSubjectsByName(username: ID!): Boolean
+    clearSubjectsByName(username: String!): Boolean
 
     setRoleById(user_id: ID!, role_id: ID!): Boolean
-    setRoleByName(username: ID!, role_name: ID!): Boolean
+    setRoleByName(username: String!, role_name: ID!): Boolean
   }
 
   input UserInput {
