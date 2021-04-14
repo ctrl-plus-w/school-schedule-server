@@ -74,11 +74,7 @@ const syncDatabase = async (config) => {
   // Middlewares
   app.use(morgan('dev'));
   app.use(express.json());
-  app.use(
-    cors({
-      origin: '*',
-    })
-  );
+  app.use(cors({ origin: '*' }));
 
   // TODO : [-] Handle user delete and destroy. (don't forget to fetch only records where deleted_at is null)
 
