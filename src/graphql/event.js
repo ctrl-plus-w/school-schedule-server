@@ -1,13 +1,14 @@
+import { QueryTypes, Op } from 'sequelize';
+import { gql } from 'apollo-server-express';
 import moment from 'moment';
 
-import { gql } from 'apollo-server-core';
+import { eventObject } from '../utils/relationMapper';
+import { resetTime } from '../utils/date';
 
 import config from '../config';
 import database from '../database';
-import { eventObject } from '../utils/relationMapper';
 
 import sequelize from '../database';
-import { QueryTypes, Op } from 'sequelize';
 
 export const typeDefs = gql`
   extend type Query {
@@ -87,7 +88,7 @@ export const resolvers = {
     userEvents: async (parent, args, context) => {
       if (!context?.id) throw new Error('You must be logged in.');
 
-      const startDate = new Date();
+      const startDate = resetTime(new Date());
       const endDate = new Date().setDate(new Date().getDate() + 14);
 
       const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.label });
@@ -102,7 +103,7 @@ export const resolvers = {
     ownedEvents: async (parent, args, context) => {
       if (!context?.id) throw new Error('You must be logged in.');
 
-      const startDate = new Date();
+      const startDate = resetTime(new Date());
       const endDate = new Date().setDate(new Date().getDate() + 14);
 
       const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.label });
@@ -118,7 +119,7 @@ export const resolvers = {
     labelEvents: async (parent, args, context) => {
       if (!context?.id) throw new Error('You must be logged in.');
 
-      const startDate = new Date();
+      const startDate = resetTime(new Date());
       const endDate = new Date().setDate(new Date().getDate() + 14);
 
       const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.role });

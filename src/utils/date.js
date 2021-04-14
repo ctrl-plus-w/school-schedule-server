@@ -12,3 +12,11 @@ export const getDates = (dbObject) => {
     deleted_at: dateToString(deleted_at),
   };
 };
+
+export const resetTime = (date) => {
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+  return new Date(date);
+};
