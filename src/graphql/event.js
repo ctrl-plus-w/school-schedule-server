@@ -106,9 +106,12 @@ export const resolvers = {
       const endDate = new Date().setDate(new Date().getDate() + 14);
 
       const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.label });
-      if (!user) throw new Error('Username not found.');
+      if (!user) throw new Error("The logged in user doesn't exists.");
 
-      const userOwnedEvents = await database.models.event.findAll({ where: { deleted_at: null, start: { [Op.between]: [startDate, endDate] } } });
+      const userOwnedEvents = await database.models.event.findAll({
+        where: { deleted_at: null, start: { [Op.between]: [startDate, endDate] } },
+        include: [{ model: database.models.user, where: { id: context.id } }],
+      });
       return userOwnedEvents.map(eventObject);
     },
 
