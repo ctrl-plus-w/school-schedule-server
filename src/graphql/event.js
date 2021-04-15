@@ -38,7 +38,6 @@ export const typeDefs = gql`
     link: String
     description: String!
     obligatory: Boolean!
-    user_id: String!
     label_id: String!
     subject_id: String!
   }
@@ -48,7 +47,6 @@ export const typeDefs = gql`
     link: String
     description: String!
     obligatory: Boolean!
-    username: String!
     label_name: String!
     subject_name: String!
   }
@@ -201,10 +199,13 @@ export const resolvers = {
     },
 
     createEventByName: async (parent, { input: args }, context) => {
+      if (!context?.id) throw new Error('Ŷou must be logged in.');
+
       const startDate = moment(args.start);
       if (startDate.isBefore(moment(Date.now()))) throw new Error('The event cannot be in the past.');
 
       const user = await database.models.user.findByPk(context.id, {
+        where: { deleted_at: null },
         include: [database.models.role, database.models.subject],
       });
 
