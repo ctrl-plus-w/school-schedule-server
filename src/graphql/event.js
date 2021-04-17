@@ -199,7 +199,7 @@ export const resolvers = {
     },
 
     createEventByName: async (parent, { input: args }, context) => {
-      if (!context?.id) throw new Error('Ŷou must be logged in.');
+      if (!context?.id) throw new Error('You must be logged in.');
 
       const startDate = moment(args.start);
       if (startDate.isBefore(moment(Date.now()))) throw new Error('The event cannot be in the past.');
