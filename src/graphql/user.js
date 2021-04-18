@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt';
-import { gql } from 'apollo-server-core';
+import { gql, UserInputError, ForbiddenError } from 'apollo-server-express';
 
 import { user as userShortcut, label as labelShortcut, subject as subjectShortcut, role as roleShortcut } from '../utils/shortcut';
 import { userObject } from '../utils/relationMapper';
@@ -84,16 +84,15 @@ export const resolver = {
   Mutation: {
     /* +---------------------------------------------+ User */
     createUser: async (_parent, { input: args }, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
       const userExist = await userShortcut.findBy({ username: args.username });
-      if (userExist) throw new Error(errors.USER_DUPLICATION);
+      if (userExist) throw new UserInputError(errors.USER_DUPLICATION);
 
       const password = await bcrypt.hash(args.password, 12);
-
       const user = await userShortcut.create({ username: args.username, full_name: args.full_name, password: password });
 
       if (args.labels_name) {
@@ -107,7 +106,7 @@ export const resolver = {
       }
 
       const role = await roleShortcut.findBy({ role_name: args.role_name });
-      if (!role) throw new Error(errors.DEFAULT);
+      if (!role) throw new UserInputError(errors.DEFAULT);
       await user.setRole(role);
 
       return userObject(user);

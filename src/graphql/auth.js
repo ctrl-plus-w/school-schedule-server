@@ -1,4 +1,4 @@
-import { gql } from 'apollo-server-core';
+import { gql, AuthenticationError } from 'apollo-server-core';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -24,10 +24,11 @@ export const resolvers = {
   Mutation: {
     login: async (_parent, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null }, include: database.models.role });
-      if (!user) throw new Error(errors.BAD_CREDENTIAL);
+      if (!user) throw new AuthenticationError(errors.BAD_CREDENTIAL);
 
       const isPasswordValid = await bcrypt.compare(args.password, user.password);
-      if (!isPasswordValid) throw new Error(errors.BAD_CREDENTIAL);
+      if (!isPasswordValid) throw new AuthenticationError(errors.BAD_CREDENTIAL);
+
       const token = jwt.sign(
         {
           id: user.id,
