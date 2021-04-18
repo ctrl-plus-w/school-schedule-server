@@ -76,6 +76,17 @@ export class user extends shortcutModel {
   constructor() {
     super('user');
   }
+
+  /**
+   * Find a record by its id and include its role.
+   * @param {string} id The record id.
+   * @returns An object.
+   */
+  static findWithRole(id) {
+    return new Promise((resolve, reject) => {
+      this.find(id, database.models.role).then(resolve).catch(reject);
+    });
+  }
 }
 
 export class subject extends shortcutModel {
