@@ -141,7 +141,7 @@ export const resolvers = {
     // TODO : [x] Check if date is not before today.
     // TODO : [ ] Check if date is a round date. (database collision problems)
 
-    createEventById: async (_, { input: args }) => {
+    createEventById: async (parent, { input: args }, context) => {
       if (!context?.id) throw new Error(errors.NOT_LOGGED);
 
       const startDate = moment(new Date(args.start));
