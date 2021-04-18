@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon --exec npm run babel-node src/index.js",
+    "dev": "nodemon --exec 'clear && npm run babel-node src/index.js'",
     "babel-node": "babel-node --presets='@babel/preset-env' --ignore='foo|bar|baz'"
   },
   "dependencies": {
