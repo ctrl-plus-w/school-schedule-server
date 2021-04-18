@@ -13,7 +13,7 @@ class shortcutModel {
    * @param {string} id The record id.
    * @returns An object.
    */
-  static findWithCondition(id, condition, includes) {
+  static findWithCondition(id, condition, includes = []) {
     return new Promise((resolve, reject) => {
       database.models[this.model].findByPk(id, { where: condition, include: includes }).then(resolve).catch(reject);
     });
@@ -25,9 +25,21 @@ class shortcutModel {
    * @param {array} includes The models it should include.
    * @returns An object.
    */
-  static find(id, includes) {
+  static find(id, includes = []) {
     return new Promise((resolve, reject) => {
       this.findWithCondition(id, { deleted_at: null }, includes).then(resolve).catch(reject);
+    });
+  }
+
+  /**
+   * Find a record by the given condition.
+   * @param {object} condition The condition to find the record.
+   * @param {array} includes The models it should include.
+   * @returns An object.
+   */
+  static findBy(condition, includes = []) {
+    return new Promise((resolve, reject) => {
+      database.models[this.model].findOne({ where: condition, include: includes }).then(resolve).catch(reject);
     });
   }
 
@@ -37,7 +49,7 @@ class shortcutModel {
    * @param {array} includes The models it should include.
    * @returns An array of objects.
    */
-  static findAllWithCondition(condition, includes) {
+  static findAllWithCondition(condition, includes = []) {
     return new Promise((resolve, reject) => {
       database.models[this.model].findAll({ where: condition, include: includes }).then(resolve).catch(reject);
     });
@@ -48,7 +60,7 @@ class shortcutModel {
    * @param {array} includes The models it should include.
    * @returns An array of objects.
    */
-  static findAll(includes) {
+  static findAll(includes = []) {
     return new Promise((resolve, reject) => {
       this.findAllWithCondition({ deleted_at: null }, includes).then(resolve).catch(reject);
     });
@@ -59,7 +71,7 @@ class shortcutModel {
    * @param {array} includes The models it should include.
    * @returns An array of objects.
    */
-  static findAllDeleted(includes) {
+  static findAllDeleted(includes = []) {
     return new Promise((resolve, reject) => {
       database.models[this.model].findAll({ include: includes }).then(resolve).catch(reject);
     });
@@ -85,6 +97,12 @@ export class user extends shortcutModel {
   static findWithRole(id) {
     return new Promise((resolve, reject) => {
       this.find(id, database.models.role).then(resolve).catch(reject);
+    });
+  }
+
+  static findByUsername(username) {
+    return new Promise((resolve, reject) => {
+      this.findBy({ username }).then(resolve).catch(reject);
     });
   }
 }
