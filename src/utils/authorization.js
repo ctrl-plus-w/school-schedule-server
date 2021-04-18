@@ -16,7 +16,6 @@ export const checkIsProfessor = (user) => {
 
 export const checkIsAdmin = (user) => {
   return new Promise((resolve, reject) => {
-    console.log(user.toJSON());
     if (!user) reject(errors.DEFAULT);
     if (!isAdmin(role(user))) reject(errors.NOT_ALLOWED);
     resolve();

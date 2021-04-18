@@ -277,7 +277,6 @@ export const resolvers = {
       const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: [{ model: database.models.role }] });
 
       if (!user) throw new Error(errors.DEFAULT);
-      console.log(user.role.role_name);
       if (user.role.role_name !== config.ROLES.ADMIN) throw new Error(errors.NOT_ALLOWED);
 
       const event = await database.models.event.findByPk(args.event_id, { include: database.models.user });
