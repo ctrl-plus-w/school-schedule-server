@@ -13,51 +13,55 @@ class shortcutModel {
    * @param {string} id The record id.
    * @returns An object.
    */
-  static findWithCondition(id, condition) {
+  static findWithCondition(id, condition, includes) {
     return new Promise((resolve, reject) => {
-      database.models[this.model].findByPk(id, { where: condition }).then(resolve).catch(reject);
-    });
-  }
-
-  /**
-   * Get all records with the given conditions.
-   * @param {object} condition The condition to find the record.
-   * @returns An array of objects.
-   */
-  static findAllWithCondition(condition) {
-    return new Promise((resolve, reject) => {
-      database.models[this.model].findAll({ where: condition }).then(resolve).catch(reject);
+      database.models[this.model].findByPk(id, { where: condition, include: includes }).then(resolve).catch(reject);
     });
   }
 
   /**
    * Find a record by its id.
    * @param {string} id The record id.
+   * @param {array} includes The models it should include.
    * @returns An object.
    */
-  static find(id) {
+  static find(id, includes) {
     return new Promise((resolve, reject) => {
-      this.findWithCondition(id, { deleted_at: null }).then(resolve).catch(reject);
+      this.findWithCondition(id, { deleted_at: null }, includes).then(resolve).catch(reject);
+    });
+  }
+
+  /**
+   * Get all records with the given conditions.
+   * @param {object} condition The condition to find the record.
+   * @param {array} includes The models it should include.
+   * @returns An array of objects.
+   */
+  static findAllWithCondition(condition, includes) {
+    return new Promise((resolve, reject) => {
+      database.models[this.model].findAll({ where: condition, include: includes }).then(resolve).catch(reject);
     });
   }
 
   /**
    * Get all the records which aren't deleted.
+   * @param {array} includes The models it should include.
    * @returns An array of objects.
    */
-  static findAll() {
+  static findAll(includes) {
     return new Promise((resolve, reject) => {
-      this.findAllWithCondition({ deleted_at: null }).then(resolve).catch(reject);
+      this.findAllWithCondition({ deleted_at: null }, includes).then(resolve).catch(reject);
     });
   }
 
   /**
    * Get all the records whether they are deleted or not.
+   * @param {array} includes The models it should include.
    * @returns An array of objects.
    */
-  static findAllDeleted() {
+  static findAllDeleted(includes) {
     return new Promise((resolve, reject) => {
-      database.models[this.model].findAll().then(resolve).catch(reject);
+      database.models[this.model].findAll({ include: includes }).then(resolve).catch(reject);
     });
   }
 }
