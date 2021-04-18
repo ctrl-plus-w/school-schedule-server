@@ -1,5 +1,6 @@
 import { gql } from 'apollo-server-core';
 
+import { user as userShortcut } from '../utils/shortcut';
 import { userObject } from '../utils/relationMapper';
 import database from '../database';
 
@@ -10,6 +11,7 @@ export const typeDefs = gql`
   extend type Query {
     user(id: ID!): User!
     users: [User!]
+    allUsers: [User!]
   }
 
   extend type Mutation {
@@ -65,12 +67,17 @@ export const typeDefs = gql`
 export const resolver = {
   Query: {
     user: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.id, { where: { deleted_at: null } });
+      const user = await userShortcut.find(args.id);
       return user ? userObject(user) : null;
     },
 
     users: async () => {
-      const users = await database.models.user.findAll({ where: { deleted_at: null } });
+      const users = await userShortcut.findAll();
+      return users.map(userObject);
+    },
+
+    allUsers: async () => {
+      const users = await userShortcut.findAllDeleted();
       return users.map(userObject);
     },
   },
