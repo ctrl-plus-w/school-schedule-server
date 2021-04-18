@@ -19,11 +19,8 @@ export const typeDefs = gql`
   extend type Mutation {
     createUser(input: UserInput!): User
 
-    deleteUserById(user_id: ID!): Boolean
-    deleteUserByName(username: String!): Boolean
-
-    destroyUserById(user_id: ID!): Boolean
-    destroyUserByName(username: String!): Boolean
+    deleteUser(id: ID!): Boolean
+    destroyUser(id: ID!): Boolean
 
     addLabelById(user_id: ID!, label_id: ID!): Boolean
     addLabelByName(username: String!, label_name: String!): Boolean
@@ -116,32 +113,26 @@ export const resolver = {
       return userObject(user);
     },
 
-    deleteUserById: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
+    deleteUser: async (_parent, args, context) => {
+      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
+
+      const user = await userShortcut.find(args.id);
       if (!user) throw new Error(errors.DEFAULT);
 
       await user.update({ deleted_at: Date.now() });
       return true;
     },
 
-    deleteUserByName: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error(errors.DEFAULT);
+    destroyUser: async (_parent, args, context) => {
+      if (!context?.id) throw new Error(errors.NOT_LOGGED);
 
-      await user.update({ deleted_at: Date.now() });
-      return true;
-    },
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-    destroyUserById: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error(errors.DEFAULT);
-
-      await user.destroy();
-      return true;
-    },
-
-    destroyUserByName: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
+      const user = await userShortcut.find(args.id);
       if (!user) throw new Error(errors.DEFAULT);
 
       await user.destroy();
