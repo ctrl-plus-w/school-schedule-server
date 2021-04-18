@@ -1,10 +1,12 @@
+import bcrypt from 'bcrypt';
 import { gql } from 'apollo-server-core';
 
-import { user as userShortcut } from '../utils/shortcut';
+import { user as userShortcut, label as labelShortcut, subject as subjectShortcut, role as roleShortcut } from '../utils/shortcut';
 import { userObject } from '../utils/relationMapper';
+import { checkIsAdmin } from '../utils/authorization';
+
 import database from '../database';
 
-import config from '../config';
 import errors from '../config/errors';
 
 export const typeDefs = gql`
@@ -84,30 +86,34 @@ export const resolver = {
 
   Mutation: {
     /* +---------------------------------------------+ User */
-    createUser: async (parent, { input: args }, context) => {
+    createUser: async (_parent, { input: args }, context) => {
       if (!context?.id) throw new Error(errors.NOT_LOGGED);
 
-      const loggedUser = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.role });
-      if (!loggedUser) throw new Error(errors.NOT_LOGGED);
-      if (loggedUser?.role?.role_name !== config.ROLES.ADMIN) throw new Error(errors.NOT_ALLOWED);
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-      const userExist = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
+      const userExist = await userShortcut.findBy({ username: args.username });
       if (userExist) throw new Error(errors.USER_DUPLICATION);
 
+      const password = await bcrypt.hash(args.password, 12);
+
+      const user = await userShortcut.create({ username: args.username, full_name: args.full_name, password: password });
+
       if (args.labels_name) {
-        const labels = await database.models.label.findAll({ where: { deleted_at: null, label_name: args.labels_name } });
-        await loggedUser.setLabels(labels);
+        const labels = await labelShortcut.findAllWithCondition({ label_name: args.labels_name });
+        await user.setLabels(labels);
       }
 
       if (args.subjects_name) {
-        const subjects = await database.models.subject.findAll({ where: { deleted_at: null, subject_name: args.subjects_name } });
-        await loggedUser.setSubjects(subjects);
+        const subjects = await subjectShortcut.findAllWithCondition({ subject_name: args.subjects_name });
+        await user.setSubjects(subjects);
       }
 
-      const role = await database.models.role.findOne({ where: { deleted_at: null, role_name: args.role_name } });
-      await loggedUser.setRole(role);
+      const role = await roleShortcut.findBy({ role_name: args.role_name });
+      if (!role) throw new Error(errors.DEFAULT);
+      await user.setRole(role);
 
-      return userObject(loggedUser);
+      return userObject(user);
     },
 
     deleteUserById: async (_parent, args) => {
