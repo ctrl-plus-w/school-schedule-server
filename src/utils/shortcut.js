@@ -2,20 +2,15 @@ import database from '../database';
 
 class shortcutModel {
   /**
-   * @param {string} model The name of the database model.
-   */
-  constructor(model) {
-    this.model = model;
-  }
-
-  /**
    * Find a record by its id with the given conditions.
    * @param {string} id The record id.
+   * @param {object} conditions The models it should include.
+   * @param {array} includes The models it should include.
    * @returns An object.
    */
-  static findWithCondition(id, condition, includes = []) {
+  static findWithCondition(id, conditions = {}, includes = []) {
     return new Promise((resolve, reject) => {
-      database.models[this.model].findByPk(id, { where: condition, include: includes }).then(resolve).catch(reject);
+      database.models[this.model].findByPk(id, { where: conditions, include: includes }).then(resolve).catch(reject);
     });
   }
 
@@ -33,13 +28,13 @@ class shortcutModel {
 
   /**
    * Find a record by the given condition.
-   * @param {object} condition The condition to find the record.
+   * @param {object} conditions The conditions to find the record.
    * @param {array} includes The models it should include.
    * @returns An object.
    */
-  static findBy(condition, includes = []) {
+  static findBy(conditions, includes = []) {
     return new Promise((resolve, reject) => {
-      database.models[this.model].findOne({ where: condition, include: includes }).then(resolve).catch(reject);
+      database.models[this.model].findOne({ where: conditions, include: includes }).then(resolve).catch(reject);
     });
   }
 
@@ -79,14 +74,14 @@ class shortcutModel {
 }
 
 export class label extends shortcutModel {
-  constructor() {
-    super('label');
+  static get model() {
+    return 'label';
   }
 }
 
 export class user extends shortcutModel {
-  constructor() {
-    super('user');
+  static get model() {
+    return 'user';
   }
 
   /**
@@ -108,13 +103,13 @@ export class user extends shortcutModel {
 }
 
 export class subject extends shortcutModel {
-  constructor() {
-    super('subject');
+  static get model() {
+    return 'subject';
   }
 }
 
 export class role extends shortcutModel {
-  constructor() {
-    super('role');
+  static get model() {
+    return 'role';
   }
 }
