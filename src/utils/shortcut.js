@@ -100,9 +100,9 @@ export class user extends shortcutModel {
     });
   }
 
-  static findByUsername(username) {
+  static create({ username, full_name, password }) {
     return new Promise((resolve, reject) => {
-      this.findBy({ username }).then(resolve).catch(reject);
+      database.models[this.model].create({ username, full_name, password }).then(resolve).catch(reject);
     });
   }
 }
