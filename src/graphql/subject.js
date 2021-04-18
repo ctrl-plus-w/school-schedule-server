@@ -1,5 +1,6 @@
 import { gql } from 'apollo-server-core';
 
+import errors from '../config/errors';
 import database from '../database';
 
 import { getTableWithUsers } from '../utils/relationMapper';
@@ -49,7 +50,7 @@ export const resolvers = {
   Mutation: {
     createSubject: async (_, { input: args }) => {
       const subjectExist = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
-      if (subjectExist) throw new Error('Subject already exist.');
+      if (subjectExist) throw new Error(errors.SUBJECT_DUPLICATION);
 
       const subject = await database.models.subject.create({ subject_name: args.subject_name, deleted_at: null });
       return getTableWithUsers(subject);
@@ -57,10 +58,10 @@ export const resolvers = {
 
     deleteSubjectById: async (_, args) => {
       const subject = await database.models.subject.findByPk(args.subject_id, { where: { deleted_at: null } });
-      if (!subject) throw new Error("Subject does't exist.");
+      if (!subject) throw new Error(errors.DEFAULT);
 
       const subjectUsers = await subject.getUsers();
-      if (subjectUsers.length > 0) throw new Error('Subject contains users.');
+      if (subjectUsers.length > 0) throw new Error(errors.SUBJECT_CASCADE);
 
       await subject.update({ deleted_at: Date.now() });
       return true;
@@ -68,10 +69,10 @@ export const resolvers = {
 
     deleteSubjectByName: async (_, args) => {
       const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
-      if (!subject) throw new Error("Subject does't exist.");
+      if (!subject) throw new Error(errors.DEFAULT);
 
       const subjectUsers = await subject.getUsers();
-      if (subjectUsers.length > 0) throw new Error('Subject contains users.');
+      if (subjectUsers.length > 0) throw new Error(errors.SUBJECT_CASCADE);
 
       await subject.update({ deleted_at: Date.now() });
       return true;
@@ -79,10 +80,10 @@ export const resolvers = {
 
     destroySubjectById: async (_, args) => {
       const subject = await database.models.subject.findByPk(args.subject_id);
-      if (!subject) throw new Error("Subject does't exist.");
+      if (!subject) throw new Error(errors.DEFAULT);
 
       const subjectUsers = await subject.getUsers();
-      if (subjectUsers.length > 0) throw new Error('Subject contains users.');
+      if (subjectUsers.length > 0) throw new Error(errors.SUBJECT_CASCADE);
 
       await subject.destroy();
       return true;
@@ -90,10 +91,10 @@ export const resolvers = {
 
     destroySubjectByName: async (_, args) => {
       const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name } });
-      if (!subject) throw new Error("Subject does't exist.");
+      if (!subject) throw new Error(errors.DEFAULT);
 
       const subjectUsers = await subject.getUsers();
-      if (subjectUsers.length > 0) throw new Error('Subject contains users.');
+      if (subjectUsers.length > 0) throw new Error(errors.SUBJECT_CASCADE);
 
       await subject.destroy();
       return true;

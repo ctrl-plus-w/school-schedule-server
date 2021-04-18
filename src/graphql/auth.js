@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import config from '../config';
+import errors from '../config/errors';
 import database from '../database';
 
 export const typeDefs = gql`
@@ -23,11 +24,10 @@ export const resolvers = {
   Mutation: {
     login: async (_, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null }, include: database.models.role });
-      if (!user) throw new Error("User doesn't exist.");
+      if (!user) throw new Error(errors.BAD_CREDENTIAL);
 
       const isPasswordValid = await bcrypt.compare(args.password, user.password);
-      if (!isPasswordValid) throw new Error('Password is invalid.');
-
+      if (!isPasswordValid) throw new Error(errors.BAD_CREDENTIAL);
       const token = jwt.sign(
         {
           id: user.id,

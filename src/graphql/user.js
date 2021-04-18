@@ -1,10 +1,10 @@
 import { gql } from 'apollo-server-core';
-import bcrypt from 'bcrypt';
 
 import { userObject } from '../utils/relationMapper';
 import database from '../database';
 
 import config from '../config';
+import errors from '../config/errors';
 
 export const typeDefs = gql`
   extend type Query {
@@ -78,17 +78,14 @@ export const resolver = {
   Mutation: {
     /* +---------------------------------------------+ User */
     createUser: async (parent, { input: args }, context) => {
-      if (!context?.id) throw new Error('You must be logged in.');
+      if (!context?.id) throw new Error(errors.NOT_LOGGED);
 
       const loggedUser = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.role });
-      if (!loggedUser) throw new Error('You must be logged in.');
-      if (loggedUser?.role?.role_name !== config.ROLES.ADMIN) throw new Error("You don't have the permission.");
+      if (!loggedUser) throw new Error(errors.NOT_LOGGED);
+      if (loggedUser?.role?.role_name !== config.ROLES.ADMIN) throw new Error(errors.NOT_ALLOWED);
 
       const userExist = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (userExist) throw new Error('User already exist.');
-
-      const cryptedPassword = bcrypt.hashSync(args.password, 12);
-      const user = await database.models.user.create({ username: args.username, full_name: args.full_name, password: cryptedPassword });
+      if (userExist) throw new Error(errors.USER_DUPLICATION);
 
       if (args.labels_name) {
         const labels = await database.models.label.findAll({ where: { deleted_at: null, label_name: args.labels_name } });
@@ -108,7 +105,7 @@ export const resolver = {
 
     deleteUserById: async (_, args) => {
       const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error('User not found.');
+      if (!user) throw new Error(errors.DEFAULT);
 
       await user.update({ deleted_at: Date.now() });
       return true;
@@ -116,7 +113,7 @@ export const resolver = {
 
     deleteUserByName: async (_, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error('User not found.');
+      if (!user) throw new Error(errors.DEFAULT);
 
       await user.update({ deleted_at: Date.now() });
       return true;
@@ -124,7 +121,7 @@ export const resolver = {
 
     destroyUserById: async (_, args) => {
       const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error('User not found.');
+      if (!user) throw new Error(errors.DEFAULT);
 
       await user.destroy();
       return true;
@@ -132,7 +129,7 @@ export const resolver = {
 
     destroyUserByName: async (_, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error('User not found.');
+      if (!user) throw new Error(errors.DEFAULT);
 
       await user.destroy();
       return true;

@@ -1,7 +1,11 @@
 import { gql } from 'apollo-server-core';
 
+import errors from '../config/errors';
 import database from '../database';
+
 import { getTableWithUsers } from '../utils/relationMapper';
+
+// TODO: [ ] Check if user have the deleted or destroyed role.
 
 export const typeDefs = gql`
   extend type Query {
@@ -48,7 +52,7 @@ export const resolvers = {
   Mutation: {
     createRole: async (_, { input: args }) => {
       const roleExist = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
-      if (roleExist) throw new Error('Role already exist');
+      if (roleExist) throw new Error(errors.ROLE_DUPLICATION);
 
       const role = await database.models.role.create({ role_name: args.role_name });
       return getTableWithUsers(role);
@@ -56,7 +60,7 @@ export const resolvers = {
 
     deleteRoleById: async (_, args) => {
       const role = await database.models.role.findByPk(args.role_id);
-      if (!role) throw new Error("Role does't exist.");
+      if (!role) throw new Error(errors.DEFAULT);
 
       await role.update({ deleted_at: null });
       return true;
@@ -64,7 +68,7 @@ export const resolvers = {
 
     deleteRoleByName: async (_, args) => {
       const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
-      if (!role) throw new Error("Role does't exist.");
+      if (!role) throw new Error(errors.DEFAULT);
 
       await role.update({ deleted_at: null });
       return true;
@@ -72,7 +76,7 @@ export const resolvers = {
 
     destroyRoleById: async (_, args) => {
       const role = await database.models.role.findByPk(args.role_id);
-      if (!role) throw new Error("Role does't exist.");
+      if (!role) throw new Error(errors.DEFAULT);
 
       await role.destroy();
       return true;
@@ -80,7 +84,7 @@ export const resolvers = {
 
     destroyRoleByName: async (_, args) => {
       const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
-      if (!role) throw new Error("Role does't exist.");
+      if (!role) throw new Error(errors.DEFAULT);
 
       await role.destroy();
       return true;

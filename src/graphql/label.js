@@ -1,7 +1,9 @@
 import { gql } from 'apollo-server-core';
 
-import { getTableWithUsers } from '../utils/relationMapper';
+import errors from '../config/errors';
 import database from '../database';
+
+import { getTableWithUsers } from '../utils/relationMapper';
 
 export const typeDefs = gql`
   extend type Query {
@@ -45,10 +47,11 @@ export const resolvers = {
       return labels.map(getTableWithUsers);
     },
   },
+
   Mutation: {
     createLabel: async (_, { input: args }) => {
       const labelExist = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null } });
-      if (labelExist) throw new Error('Label already exist');
+      if (labelExist) throw new Error(errors.LABEL_DUPLICATION);
 
       const label = await database.models.label.create({ label_name: args.label_name /* label_display_name: args.label_display_name */ });
       return getTableWithUsers(label);
@@ -56,13 +59,13 @@ export const resolvers = {
 
     deleteLabelById: async (_, args) => {
       const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+      if (!user) throw new Error(errors.DEFAULT);
 
       const label = await database.models.label.findByPk(args.id, { where: { deleted_at: null } });
-      if (!label) throw new Error("Label doesn't exist.");
+      if (!label) throw new Error(errors.DEFAULT);
 
       const labelUsers = await label.getUsers();
-      if (labelUsers.length > 0) throw new Error('Label contains users.');
+      if (labelUsers.length > 0) throw new Error(errors.LABEL_CASCADE);
 
       await label.update({ deleted_at: Date.now() });
       return true;
@@ -70,13 +73,13 @@ export const resolvers = {
 
     deleteLabelByName: async (_, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+      if (!user) throw new Error(errors.DEFAULT);
 
       const label = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null } });
-      if (!label) throw new Error("Label doesn't exist.");
+      if (!label) throw new Error(errors.DEFAULT);
 
       const labelUsers = await label.getUsers();
-      if (labelUsers.length > 0) throw new Error('Label contains users.');
+      if (labelUsers.length > 0) throw new Error(errors.LABEL_CASCADE);
 
       await label.update({ deleted_at: Date.now() });
       return true;
@@ -84,13 +87,13 @@ export const resolvers = {
 
     destroyLabelById: async (_, args) => {
       const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+      if (!user) throw new Error(errors.DEFAULT);
 
       const label = await database.models.label.findByPk(args.id);
-      if (!label) throw new Error("Label doesn't exist.");
+      if (!label) throw new Error(errors.DEFAULT);
 
       const labelUsers = await label.getUsers();
-      if (labelUsers.length > 0) throw new Error('Label contains users.');
+      if (labelUsers.length > 0) throw new Error(errors.LABEL_CASCADE);
 
       await label.destroy();
       return true;
@@ -98,13 +101,13 @@ export const resolvers = {
 
     destroyLabelByName: async (_, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+      if (!user) throw new Error(errors.DEFAULT);
 
       const label = await database.models.label.findOne({ where: { label_name: args.label_name } });
-      if (!label) throw new Error("Label doesn't exist.");
+      if (!label) throw new Error(errors.DEFAULT);
 
       const labelUsers = await label.getUsers();
-      if (labelUsers.length > 0) throw new Error('Label contains users.');
+      if (labelUsers.length > 0) throw new Error(errors.LABEL_CASCADE);
 
       await label.destroy();
       return true;
