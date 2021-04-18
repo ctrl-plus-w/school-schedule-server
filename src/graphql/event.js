@@ -93,7 +93,9 @@ export const resolvers = {
 
       const userLabelIds = user.toJSON().labels.map((label) => label.id);
 
-      const events = await database.models.event.findAll({ where: { label_id: userLabelIds, start: { [Op.between]: [startDate, endDate] } } });
+      const events = await database.models.event.findAll({
+        where: { label_id: userLabelIds, start: { [Op.between]: [startDate, endDate] }, deleted_at: null },
+      });
       return events.map(eventObject);
     },
 
