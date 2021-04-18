@@ -19,18 +19,15 @@ export const typeDefs = gql`
 
     userEvents: [Event!]
     ownedEvents: [Event!]
-    labelEvents(label_id: ID!): [Event!]
+    labelEvents(label_name: String!): [Event!]
   }
 
   extend type Mutation {
     createEventById(input: EventInputById): Event
     createEventByName(input: EventInputByName): Event
 
-    deleteEventById(user_id: ID!, event_id: ID!): Boolean
-    deleteEventByName(username: ID!, event_id: ID!): Boolean
-
-    destroyEventById(user_id: ID!, event_id: ID!): Boolean
-    destroyEventByName(username: ID!, event_id: ID!): Boolean
+    deleteEvent(event_id: ID!): Boolean
+    destroyEvent(event_id: ID!): Boolean
   }
 
   input EventInputById {
@@ -124,7 +121,11 @@ export const resolvers = {
       if (!user) throw new Error('Username not found.');
       if (user?.role?.role_name !== config.ROLES.PROFESSOR) throw new Error("You don't have the permission.");
 
-      const events = await database.models.event.findAll({ where: { label_id: args.label_id, start: { [Op.between]: [startDate, endDate] } } });
+      const events = await database.models.event.findAll({
+        where: { start: { [Op.between]: [startDate, endDate] } },
+        include: [{ model: database.models.label, where: { label_name: args.label_name } }],
+      });
+
       return events.map(eventObject);
     },
   },
@@ -140,7 +141,7 @@ export const resolvers = {
     createEventById: async (_, { input: args }) => {
       if (!context?.id) throw new Error('You must be logged in.');
 
-      const startDate = moment(args.start);
+      const startDate = moment(new Date(args.start));
       if (startDate.isBefore(moment(Date.now()))) throw new Error('The event cannot be in the past.');
 
       const user = await database.models.user.findByPk(context.id, {
@@ -201,7 +202,7 @@ export const resolvers = {
     createEventByName: async (parent, { input: args }, context) => {
       if (!context?.id) throw new Error('You must be logged in.');
 
-      const startDate = moment(args.start);
+      const startDate = moment(new Date(args.start));
       if (startDate.isBefore(moment(Date.now()))) throw new Error('The event cannot be in the past.');
 
       const user = await database.models.user.findByPk(context.id, {
@@ -215,7 +216,7 @@ export const resolvers = {
 
       const userOwnedEvents = await database.models.event.count({
         where: { deleted_at: null, start: startDate.toISOString() },
-        include: [{ model: database.models.user, where: { id: context.id } }],
+        include: [{ model: database.models.user, where: { id: context.id, deleted_at: null } }],
       });
 
       if (userOwnedEvents > 0) throw new Error('You already have an event at this time.');
@@ -223,7 +224,7 @@ export const resolvers = {
       const label = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null }, include: database.models.user });
       if (!label) throw new Error("Label does't exist.");
 
-      const sql = `SELECT User.id FROM Event JOIN Label ON Event.label_id = Label.id JOIN UserLabels ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE Event.start = "${startDate.toISOString()}"`;
+      const sql = `SELECT User.id FROM Event JOIN Label ON Event.label_id = Label.id JOIN UserLabels ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE Event.start = "${startDate.toISOString()}" AND Event.deleted_at = null`;
       const request = await sequelize.query(sql, { type: QueryTypes.SELECT });
 
       const labelUserIds = await label.users.map((obj) => obj.id);
@@ -258,16 +259,20 @@ export const resolvers = {
       return eventObject(event);
     },
 
-    // TODO : For delete and destroy, do it if the permission is admin.
+    // TODO : For delete and destroy, do it if the permission is admin / professor.
 
-    deleteEventById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
+    deleteEvent: async (_, args, context) => {
+      if (!context?.id) throw new Error('You must be logged in.');
+
+      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.role });
+
       if (!user) throw new Error("User doesn't exist.");
+      if (user.role.role_name !== config.ROLES.PROFESSOR) throw new Error("You don't have the permission.");
 
       const event = await database.models.event.findByPk(args.event_id, { where: { deleted_at: null }, include: database.models.user });
       if (!event) throw new Error("Event doesn't exist.");
 
-      const userIsOwner = event.toJSON().user.id === user.toJSON().id;
+      const userIsOwner = event.user.id === user.id;
       if (!userIsOwner) throw new Error('User must be the owner of the event.');
 
       await event.update({ deleted_at: new Date() });
@@ -275,45 +280,16 @@ export const resolvers = {
       return true;
     },
 
-    deleteEventByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
+    destroyEvent: async (_, args, context) => {
+      if (!context?.id) throw new Error('You must be logged in.');
+
+      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: [{ model: database.models.role }] });
+
       if (!user) throw new Error("User doesn't exist.");
-
-      const event = await database.models.event.findByPk(args.event_id, { include: database.models.user, where: { deleted_at: null } });
-      if (!event) throw new Error("Event doesn't exist.");
-
-      const userIsOwner = event.toJSON().user.id === user.toJSON().id;
-      if (!userIsOwner) throw new Error('User must be the owner of the event.');
-
-      await event.update({ deleted_at: new Date() });
-
-      return true;
-    },
-
-    destroyEventById: async (_, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+      if (user.role.role_name !== config.ROLES.ADMIN) throw new Error("You don't have the permission.");
 
       const event = await database.models.event.findByPk(args.event_id, { include: database.models.user });
       if (!event) throw new Error("Event doesn't exist.");
-
-      const userIsOwner = event.toJSON().user.id === user.toJSON().id;
-      if (!userIsOwner) throw new Error('User must be the owner of the event.');
-
-      await event.destroy();
-
-      return true;
-    },
-
-    destroyEventByName: async (_, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
-
-      const event = await database.models.event.findByPk(args.event_id, { include: database.models.user });
-      if (!event) throw new Error("Event doesn't exist.");
-
-      const userIsOwner = event.toJSON().user.id === user.toJSON().id;
-      if (!userIsOwner) throw new Error('User must be the owner of the event.');
 
       await event.destroy();
 
