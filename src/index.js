@@ -9,7 +9,6 @@ import database from './database';
 import isAuth from './middlewares/is-auth';
 
 import { resolvers, typeDefs } from './graphql';
-import { Op } from 'sequelize';
 
 const syncDatabase = async (config) => {
   if (!config?.sync) return;

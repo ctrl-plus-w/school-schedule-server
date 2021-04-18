@@ -22,7 +22,7 @@ export const typeDefs = gql`
 
 export const resolvers = {
   Mutation: {
-    login: async (_, args) => {
+    login: async (_parent, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null }, include: database.models.role });
       if (!user) throw new Error(errors.BAD_CREDENTIAL);
 

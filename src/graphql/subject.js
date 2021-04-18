@@ -37,7 +37,7 @@ export const typeDefs = gql`
 
 export const resolvers = {
   Query: {
-    subject: async (_, args) => {
+    subject: async (_parent, args) => {
       const subject = await database.models.subject.findByPk(args.id, { where: { deleted_at: null } });
       return subject ? getTableWithUsers(subject) : null;
     },
@@ -48,7 +48,7 @@ export const resolvers = {
     },
   },
   Mutation: {
-    createSubject: async (_, { input: args }) => {
+    createSubject: async (_parent, { input: args }) => {
       const subjectExist = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
       if (subjectExist) throw new Error(errors.SUBJECT_DUPLICATION);
 
@@ -56,7 +56,7 @@ export const resolvers = {
       return getTableWithUsers(subject);
     },
 
-    deleteSubjectById: async (_, args) => {
+    deleteSubjectById: async (_parent, args) => {
       const subject = await database.models.subject.findByPk(args.subject_id, { where: { deleted_at: null } });
       if (!subject) throw new Error(errors.DEFAULT);
 
@@ -67,7 +67,7 @@ export const resolvers = {
       return true;
     },
 
-    deleteSubjectByName: async (_, args) => {
+    deleteSubjectByName: async (_parent, args) => {
       const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
       if (!subject) throw new Error(errors.DEFAULT);
 
@@ -78,7 +78,7 @@ export const resolvers = {
       return true;
     },
 
-    destroySubjectById: async (_, args) => {
+    destroySubjectById: async (_parent, args) => {
       const subject = await database.models.subject.findByPk(args.subject_id);
       if (!subject) throw new Error(errors.DEFAULT);
 
@@ -89,7 +89,7 @@ export const resolvers = {
       return true;
     },
 
-    destroySubjectByName: async (_, args) => {
+    destroySubjectByName: async (_parent, args) => {
       const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name } });
       if (!subject) throw new Error(errors.DEFAULT);
 

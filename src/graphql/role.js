@@ -39,7 +39,7 @@ export const typeDefs = gql`
 
 export const resolvers = {
   Query: {
-    role: async (_, args) => {
+    role: async (_parent, args) => {
       const role = await database.models.role.findByPk(args.id, { where: { deleted_at: null } });
       return getTableWithUsers(role);
     },
@@ -50,7 +50,7 @@ export const resolvers = {
     },
   },
   Mutation: {
-    createRole: async (_, { input: args }) => {
+    createRole: async (_parent, { input: args }) => {
       const roleExist = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
       if (roleExist) throw new Error(errors.ROLE_DUPLICATION);
 
@@ -58,7 +58,7 @@ export const resolvers = {
       return getTableWithUsers(role);
     },
 
-    deleteRoleById: async (_, args) => {
+    deleteRoleById: async (_parent, args) => {
       const role = await database.models.role.findByPk(args.role_id);
       if (!role) throw new Error(errors.DEFAULT);
 
@@ -66,7 +66,7 @@ export const resolvers = {
       return true;
     },
 
-    deleteRoleByName: async (_, args) => {
+    deleteRoleByName: async (_parent, args) => {
       const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
       if (!role) throw new Error(errors.DEFAULT);
 
@@ -74,7 +74,7 @@ export const resolvers = {
       return true;
     },
 
-    destroyRoleById: async (_, args) => {
+    destroyRoleById: async (_parent, args) => {
       const role = await database.models.role.findByPk(args.role_id);
       if (!role) throw new Error(errors.DEFAULT);
 
@@ -82,7 +82,7 @@ export const resolvers = {
       return true;
     },
 
-    destroyRoleByName: async (_, args) => {
+    destroyRoleByName: async (_parent, args) => {
       const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
       if (!role) throw new Error(errors.DEFAULT);
 

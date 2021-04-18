@@ -37,7 +37,7 @@ export const typeDefs = gql`
 
 export const resolvers = {
   Query: {
-    label: async (_, args) => {
+    label: async (_parent, args) => {
       const label = await database.models.label.findByPk(args.id, { where: { deleted_at: null } });
       return getTableWithUsers(label);
     },
@@ -49,7 +49,7 @@ export const resolvers = {
   },
 
   Mutation: {
-    createLabel: async (_, { input: args }) => {
+    createLabel: async (_parent, { input: args }) => {
       const labelExist = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null } });
       if (labelExist) throw new Error(errors.LABEL_DUPLICATION);
 
@@ -57,7 +57,7 @@ export const resolvers = {
       return getTableWithUsers(label);
     },
 
-    deleteLabelById: async (_, args) => {
+    deleteLabelById: async (_parent, args) => {
       const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error(errors.DEFAULT);
 
@@ -71,7 +71,7 @@ export const resolvers = {
       return true;
     },
 
-    deleteLabelByName: async (_, args) => {
+    deleteLabelByName: async (_parent, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error(errors.DEFAULT);
 
@@ -85,7 +85,7 @@ export const resolvers = {
       return true;
     },
 
-    destroyLabelById: async (_, args) => {
+    destroyLabelById: async (_parent, args) => {
       const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
       if (!user) throw new Error(errors.DEFAULT);
 
@@ -99,7 +99,7 @@ export const resolvers = {
       return true;
     },
 
-    destroyLabelByName: async (_, args) => {
+    destroyLabelByName: async (_parent, args) => {
       const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
       if (!user) throw new Error(errors.DEFAULT);
 
