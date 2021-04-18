@@ -122,7 +122,7 @@ export const resolvers = {
       if (user?.role?.role_name !== config.ROLES.PROFESSOR) throw new Error("You don't have the permission.");
 
       const events = await database.models.event.findAll({
-        where: { start: { [Op.between]: [startDate, endDate] } },
+        where: { deleted_at: null, start: { [Op.between]: [startDate, endDate] } },
         include: [{ model: database.models.label, where: { label_name: args.label_name } }],
       });
 
@@ -150,7 +150,7 @@ export const resolvers = {
       });
 
       if (!user) throw new Error("User does't exist.");
-      if (!user.role) throw new Error('User must have a role.');
+      if (user.role.role_name !== config.ROLES.PROFESSOR) throw new Error("You don't have the permission.");
       if (!user.subjects) throw new Error('User must own at least one subject.');
 
       const userOwnedEvents = await database.models.event.count({
@@ -174,12 +174,6 @@ export const resolvers = {
 
       const subject = await database.models.subject.findByPk(args.subject_id, { where: { deleted_at: null } });
       if (!subject) throw new Error("Subject does't exist.");
-
-      const professorRole = await database.models.role.findOne({ where: { role_name: config.ROLES.PROFESSOR, deleted_at: null } });
-      if (!professorRole) throw new Error('Professor role not defined.');
-
-      const isUserProfessor = professorRole.toJSON().id === user.toJSON().role.id;
-      if (!isUserProfessor) throw new Error('User must have the professor role.');
 
       const userOwnSubject = await user.hasSubject(subject);
       if (!userOwnSubject) throw new Error('User must own the subject.');
@@ -211,7 +205,7 @@ export const resolvers = {
       });
 
       if (!user) throw new Error("User does't exist.");
-      if (!user.role) throw new Error('User must have a role.');
+      if (user.role !== config.ROLES.PROFESSOR) throw new Error("You don't have the permission.");
       if (!user.subjects) throw new Error('User must own at least one subject.');
 
       const userOwnedEvents = await database.models.event.count({
@@ -235,13 +229,6 @@ export const resolvers = {
 
       const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
       if (!subject) throw new Error("Subject does't exist.");
-
-      const professorRole = await database.models.role.findOne({ where: { role_name: config.ROLES.PROFESSOR, deleted_at: null } });
-      if (!professorRole) throw new Error('Professor role not defined.');
-
-      const isUserProfessor = professorRole.toJSON().id === user.toJSON().role.id;
-      if (!isUserProfessor) throw new Error('User must have the professor role.');
-
       const userOwnSubject = await user.hasSubject(subject);
       if (!userOwnSubject) throw new Error('User must own the subject.');
 
@@ -286,6 +273,7 @@ export const resolvers = {
       const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: [{ model: database.models.role }] });
 
       if (!user) throw new Error("User doesn't exist.");
+      console.log(user.role.role_name);
       if (user.role.role_name !== config.ROLES.ADMIN) throw new Error("You don't have the permission.");
 
       const event = await database.models.event.findByPk(args.event_id, { include: database.models.user });
