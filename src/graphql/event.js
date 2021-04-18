@@ -205,7 +205,7 @@ export const resolvers = {
       });
 
       if (!user) throw new Error("User does't exist.");
-      if (user.role !== config.ROLES.PROFESSOR) throw new Error("You don't have the permission.");
+      if (user.role.role_name !== config.ROLES.PROFESSOR) throw new Error("You don't have the permission.");
       if (!user.subjects) throw new Error('User must own at least one subject.');
 
       const userOwnedEvents = await database.models.event.count({
