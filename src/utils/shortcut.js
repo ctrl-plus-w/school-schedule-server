@@ -39,6 +39,20 @@ class shortcutModel {
   }
 
   /**
+   * Find a record by its name.
+   * @param {string} name The name of the record. (e.g. label > { label_name : 'name' })
+   * @param {array} includesThe models it shoud include.
+   * @returns An object.
+   */
+  static findByName(name, includes = []) {
+    return new Promise((resolve, reject) => {
+      this.findBy({ [`${this.model}_name`]: name, deleted_at: null }, includes)
+        .then(resolve)
+        .catch(reject);
+    });
+  }
+
+  /**
    * Get all records with the given conditions.
    * @param {object} condition The condition to find the record.
    * @param {array} includes The models it should include.
