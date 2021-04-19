@@ -120,9 +120,11 @@ export class user extends shortcutModel {
    * @param {array} includes The models it should include.
    * @returns A user object.
    */
-  static findWithRole(id, includes) {
+  static findWithRole(id, includes = []) {
     return new Promise((resolve, reject) => {
-      this.find(id, database.models.role, includes).then(resolve).catch(reject);
+      this.find(id, [database.models.role, ...includes])
+        .then(resolve)
+        .catch(reject);
     });
   }
 
