@@ -44,8 +44,8 @@ export const typeDefs = gql`
     link: String
     description: String!
     obligatory: Boolean!
-    label_name: String!
-    subject_name: String!
+    label_id: ID!
+    subject_id: ID!
   }
 
   type Event {
@@ -131,7 +131,7 @@ export const resolvers = {
       const user = await userShortcut.findWithRole(context.id, [database.models.subject]);
       await checkIsProfessor(user);
 
-      const subject = await subjectShortcut.findByName(args.subject_name);
+      const subject = await subjectShortcut.find(args.subject_id);
       if (!subject) throw new Error(errors.DEFAULT);
 
       const userOwnSubject = await user.hasSubject(subject);
@@ -140,7 +140,7 @@ export const resolvers = {
       const userOwnedEvents = await eventShortcut.findAll({ model: database.models.user, where: { id: context.id } });
       if (userOwnedEvents > 0) throw new UserInputError(errors.EVENT_TAKEN);
 
-      const label = await labelShortcut.findByName(args.label_name, [database.models.user]);
+      const label = await labelShortcut.find(args.label_id, [database.models.user]);
       if (!label) throw new UserInputError(errors.DEFAULT);
 
       // Select every user which the label contains.
