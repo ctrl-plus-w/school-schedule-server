@@ -30,6 +30,7 @@ export const typeDefs = gql`
     ownedEvents: [Event!]
 
     labelEvents(id: ID!): [Event!]
+    labelRelatedEvents(id: ID!): [Event!]
   }
 
   extend type Mutation {
@@ -110,6 +111,27 @@ export const resolvers = {
 
       const labelEvents = await eventShortcut.findAll({ model: database.models.label, where: { id: args.id } });
       return labelEvents.map(eventObject);
+    },
+
+    labelRelatedEvents: async (_parent, args, context) => {
+      if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
+
+      const user = await userShortcut.findWithRole(context.id);
+      await checkIsProfessor(user);
+
+      const label = await labelShortcut.find(args.id, [database.models.user]);
+      const usersId = await label.users.map((user) => user.id);
+
+      const usersIdStr = usersId.map((id) => `'${id}'`).join(', ');
+
+      const labelsSQL = `SELECT Label.id FROM UserLabels JOIN Label ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE User.id IN(${usersIdStr})`;
+      const labels = await database.query(labelsSQL, { type: QueryTypes.SELECT });
+
+      const labelsId = labels.map((l) => l.id);
+      console.log(labelsId);
+
+      const events = await eventShortcut.findAll({ model: database.models.label, where: { id: labelsId } });
+      return events.map(eventObject);
     },
   },
 
