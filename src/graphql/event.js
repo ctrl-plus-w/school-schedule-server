@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { QueryTypes } from 'sequelize';
-import { AuthenticationError, gql, UserInputError } from 'apollo-server-express';
+import { AuthenticationError, ForbiddenError, gql, UserInputError } from 'apollo-server-express';
 
 import moment from 'moment';
 
@@ -171,40 +171,32 @@ export const resolvers = {
       return eventObject(event);
     },
 
-    // TODO : For delete and destroy, do it if the permission is admin / professor.
-
     deleteEvent: async (_, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+      if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
 
-      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.role });
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsProfessor(loggedUser);
 
-      if (!user) throw new Error(errors.DEFAULT);
-      if (user.role.role_name !== config.ROLES.PROFESSOR) throw new Error(errors.NOT_ALLOWED);
+      const event = await eventShortcut.find(args.id, [database.models.user]);
+      if (!event) throw new UserInputError(errors.DEFAULT);
 
-      const event = await database.models.event.findByPk(args.event_id, { where: { deleted_at: null }, include: database.models.user });
-      if (!event) throw new Error(errors.DEFAULT);
-
-      const userIsOwner = event.user.id === user.id;
-      if (!userIsOwner) throw new Error(errors.NOT_EVENT_OWNER);
+      const userIsOwner = event.user.id === loggedUser.id;
+      if (!userIsOwner) throw new ForbiddenError(errors.NOT_EVENT_OWNER);
 
       await event.update({ deleted_at: new Date() });
-
       return true;
     },
 
     destroyEvent: async (_, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+      if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
 
-      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: [{ model: database.models.role }] });
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-      if (!user) throw new Error(errors.DEFAULT);
-      if (user.role.role_name !== config.ROLES.ADMIN) throw new Error(errors.NOT_ALLOWED);
-
-      const event = await database.models.event.findByPk(args.event_id, { include: database.models.user });
-      if (!event) throw new Error(errors.DEFAULT);
+      const event = await eventShortcut.findDeleted(args.id, [database.models.user]);
+      if (!event) throw new UserInputError(errors.DEFAULT);
 
       await event.destroy();
-
       return true;
     },
   },
