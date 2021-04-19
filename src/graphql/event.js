@@ -128,7 +128,6 @@ export const resolvers = {
       const labels = await database.query(labelsSQL, { type: QueryTypes.SELECT });
 
       const labelsId = labels.map((l) => l.id);
-      console.log(labelsId);
 
       const events = await eventShortcut.findAll({ model: database.models.label, where: { id: labelsId } });
       return events.map(eventObject);
