@@ -1,9 +1,11 @@
-import { gql } from 'apollo-server-core';
+import { AuthenticationError, gql, UserInputError } from 'apollo-server-core';
 
 import errors from '../config/errors';
-import database from '../database';
 
 import { getTableWithUsers } from '../utils/relationMapper';
+
+import { checkIsAdmin } from '../utils/authorization';
+import { role as roleShortcut, user as userShortcut } from '../utils/shortcut';
 
 // TODO: [ ] Check if user have the deleted or destroyed role.
 
@@ -16,11 +18,9 @@ export const typeDefs = gql`
   extend type Mutation {
     createRole(input: RoleInput): Role!
 
-    deleteRoleById(role_id: ID!): Boolean
-    deleteRoleByName(role_name: String!): Boolean
+    deleteRole(id: ID!): Boolean
 
-    destroyRoleById(role_id: ID!): Boolean
-    destroyRoleByName(role_name: String!): Boolean
+    destroyRole(id: ID!): Boolean
   }
 
   input RoleInput {
@@ -40,51 +40,50 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     role: async (_parent, args) => {
-      const role = await database.models.role.findByPk(args.id, { where: { deleted_at: null } });
+      const role = await roleShortcut.find(args.id);
       return getTableWithUsers(role);
     },
 
     roles: async () => {
-      const roles = await database.models.role.findAll({ where: { deleted_at: null } });
+      const roles = await roleShortcut.findAll();
       return roles.map(getTableWithUsers);
     },
   },
   Mutation: {
-    createRole: async (_parent, { input: args }) => {
-      const roleExist = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
-      if (roleExist) throw new Error(errors.ROLE_DUPLICATION);
+    createRole: async (_parent, { input: args }, context) => {
+      if (!context?.id) throw new AuthenticationError(errors.NOT_ALLOWED);
 
-      const role = await database.models.role.create({ role_name: args.role_name });
+      const user = await userShortcut.find(context.id);
+      await checkIsAdmin(user);
+
+      const roleExist = await roleShortcut.findByName(args.role_name);
+      if (roleExist) throw new UserInputError(errors.ROLE_DUPLICATION);
+
+      const role = await roleShortcut.create({ role_name: args.role_name });
       return getTableWithUsers(role);
     },
 
-    deleteRoleById: async (_parent, args) => {
-      const role = await database.models.role.findByPk(args.role_id);
-      if (!role) throw new Error(errors.DEFAULT);
+    deleteRole: async (_parent, args, context) => {
+      if (!context?.id) throw new AuthenticationError(errors.NOT_ALLOWED);
+
+      const user = await userShortcut.find(context.id);
+      await checkIsAdmin(user);
+
+      const role = await roleShortcut.find(args.id);
+      if (!role) throw new UserInputError(errors.DEFAULT);
 
       await role.update({ deleted_at: null });
       return true;
     },
 
-    deleteRoleByName: async (_parent, args) => {
-      const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
-      if (!role) throw new Error(errors.DEFAULT);
+    destroyRole: async (_parent, args, context) => {
+      if (!context?.id) throw new AuthenticationError(errors.NOT_ALLOWED);
 
-      await role.update({ deleted_at: null });
-      return true;
-    },
+      const user = await userShortcut.find(context.id);
+      await checkIsAdmin(user);
 
-    destroyRoleById: async (_parent, args) => {
-      const role = await database.models.role.findByPk(args.role_id);
-      if (!role) throw new Error(errors.DEFAULT);
-
-      await role.destroy();
-      return true;
-    },
-
-    destroyRoleByName: async (_parent, args) => {
-      const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
-      if (!role) throw new Error(errors.DEFAULT);
+      const role = await roleShortcut.findDeleted(args.id);
+      if (!role) throw new UserInputError(errors.DEFAULT);
 
       await role.destroy();
       return true;
