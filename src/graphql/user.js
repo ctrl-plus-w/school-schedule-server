@@ -26,12 +26,9 @@ export const typeDefs = gql`
     removeLabel(user_id: String!, label_id: String!): Boolean
     clearLabels(user_id: String!): Boolean
 
-    addSubjectById(user_id: ID!, subject_id: ID!): Boolean
-    addSubjectByName(username: String!, subject_name: String!): Boolean
-    removeSubjectById(user_id: ID!, subject_id: ID!): Boolean
-    removeSubjectByName(username: String!, subject_name: String!): Boolean
-    clearSubjectsById(user_id: ID!): Boolean
-    clearSubjectsByName(username: String!): Boolean
+    addSubject(user_id: ID!, subject_id: ID!): Boolean
+    removeSubject(user_id: ID!, subject_id: ID!): Boolean
+    clearSubjects(user_id: ID!): Boolean
 
     setRoleById(user_id: ID!, role_id: ID!): Boolean
     setRoleByName(username: String!, role_name: String!): Boolean
@@ -182,61 +179,46 @@ export const resolver = {
     },
 
     /* +---------------------------------------------+ Subject */
-    addSubjectById: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+    addSubject: async (_parent, args, context) => {
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
-      const subject = await database.models.subject.findByPk(args.subject_id, { where: { deleted_at: null } });
-      if (!subject) throw new Error("Subject doesn't exist.");
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-      await user.addSubject(subject);
-      return true;
-    },
+      const user = await userShortcut.find(args.user_id);
+      if (!user) throw new UserInputError(errors.DEFAULT);
 
-    addSubjectByName: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
-
-      const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
-      if (!subject) throw new Error("Subject doesn't exist.");
+      const subject = await subjectShortcut.find(args.subject_id);
+      if (!subject) throw new UserInputError(errors.DEFAULT);
 
       await user.addSubject(subject);
       return true;
     },
 
-    removeSubjectById: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+    removeSubject: async (_parent, args, context) => {
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
-      const subject = await database.models.subject.findByPk(args.subject_id, { where: { deleted_at: null } });
-      if (!subject) throw new Error("Subject doesn't exist.");
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-      await user.removeSubject(subject);
-      return true;
-    },
+      const user = await userShortcut.find(args.user_id);
+      if (!user) throw new UserInputError(errors.DEFAULT);
 
-    removeSubjectByName: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
-
-      const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
-      if (!subject) throw new Error("Subject doesn't exist.");
+      const subject = await subjectShortcut.find(args.subject_id);
+      if (!subject) throw new UserInputError(errors.DEFAULT);
 
       await user.removeSubject(subject);
       return true;
     },
 
-    clearSubjectsById: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+    clearSubjects: async (_parent, args, context) => {
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
-      await user.removeSubjects();
-      return true;
-    },
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-    clearSubjectsByName: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+      const user = await userShortcut.find(args.user_id);
+      if (!user) throw new UserInputError(errors.DEFAULT);
 
       await user.removeSubjects();
       return true;
