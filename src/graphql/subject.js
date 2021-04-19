@@ -1,9 +1,10 @@
-import { gql } from 'apollo-server-core';
+import { ForbiddenError, gql, UserInputError } from 'apollo-server-core';
 
 import errors from '../config/errors';
-import database from '../database';
 
-import { getTableWithUsers } from '../utils/relationMapper';
+import { getObjectWithUsers } from '../utils/relationMapper';
+import { checkIsAdmin } from '../utils/authorization';
+import { subject as subjectShortcut, user as userShortcut } from '../utils/shortcut';
 
 export const typeDefs = gql`
   extend type Query {
@@ -14,11 +15,9 @@ export const typeDefs = gql`
   extend type Mutation {
     createSubject(input: SubjectInput): Subject!
 
-    deleteSubjectById(subject_id: ID!): Boolean
-    deleteSubjectByName(subject_name: String!): Boolean
+    deleteSubject(id: ID!): Boolean
 
-    destroySubjectById(subject_id: ID!): Boolean
-    destroySubjectByName(subject_name: String!): Boolean
+    destroySubject(id: ID!): Boolean
   }
 
   input SubjectInput {
@@ -38,59 +37,52 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     subject: async (_parent, args) => {
-      const subject = await database.models.subject.findByPk(args.id, { where: { deleted_at: null } });
-      return subject ? getTableWithUsers(subject) : null;
+      const subject = await subjectShortcut.find(args.subject_id);
+      return subject ? getObjectWithUsers(subject) : null;
     },
 
     subjects: async () => {
-      const subjects = await database.models.subject.findAll({ where: { deleted_at: null } });
-      return subjects.map(getTableWithUsers);
+      const subjects = await subjectShortcut.findAll();
+      return subjects.map(getObjectWithUsers);
     },
   },
   Mutation: {
-    createSubject: async (_parent, { input: args }) => {
-      const subjectExist = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
-      if (subjectExist) throw new Error(errors.SUBJECT_DUPLICATION);
+    createSubject: async (_parent, { input: args }, context) => {
+      if (!context?.id) throw new ForbiddenError(errors.NOT_ALLOWED);
 
-      const subject = await database.models.subject.create({ subject_name: args.subject_name, deleted_at: null });
-      return getTableWithUsers(subject);
+      const user = await userShortcut.find(context.id);
+      await checkIsAdmin(user);
+
+      const subjectExist = await subjectShortcut.findByName(args.subject_name);
+      if (subjectExist) throw new UserInputError(errors.SUBJECT_DUPLICATION);
+
+      const subject = await subjectShortcut.create({ subject_name: args.subject_name });
+      return getObjectWithUsers(subject);
     },
 
-    deleteSubjectById: async (_parent, args) => {
-      const subject = await database.models.subject.findByPk(args.subject_id, { where: { deleted_at: null } });
-      if (!subject) throw new Error(errors.DEFAULT);
+    deleteSubject: async (_parent, args, context) => {
+      if (!context?.id) throw new ForbiddenError(errors.NOT_ALLOWED);
+
+      const user = await userShortcut.find(context.id);
+      await checkIsAdmin(user);
+
+      const subject = await subjectShortcut.find(args.id);
+      if (!subject) throw new UserInputError(errors.DEFAULT);
 
       const subjectUsers = await subject.getUsers();
-      if (subjectUsers.length > 0) throw new Error(errors.SUBJECT_CASCADE);
+      if (subjectUsers.length > 0) throw new UserInputError(errors.SUBJECT_CASCADE);
 
       await subject.update({ deleted_at: Date.now() });
       return true;
     },
 
-    deleteSubjectByName: async (_parent, args) => {
-      const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
-      if (!subject) throw new Error(errors.DEFAULT);
+    destroySubject: async (_parent, args, context) => {
+      if (!context?.id) throw new ForbiddenError(errors.NOT_ALLOWED);
 
-      const subjectUsers = await subject.getUsers();
-      if (subjectUsers.length > 0) throw new Error(errors.SUBJECT_CASCADE);
+      const user = await userShortcut.find(context.id);
+      await checkIsAdmin(user);
 
-      await subject.update({ deleted_at: Date.now() });
-      return true;
-    },
-
-    destroySubjectById: async (_parent, args) => {
-      const subject = await database.models.subject.findByPk(args.subject_id);
-      if (!subject) throw new Error(errors.DEFAULT);
-
-      const subjectUsers = await subject.getUsers();
-      if (subjectUsers.length > 0) throw new Error(errors.SUBJECT_CASCADE);
-
-      await subject.destroy();
-      return true;
-    },
-
-    destroySubjectByName: async (_parent, args) => {
-      const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name } });
+      const subject = await subjectShortcut.findDeleted(args.id);
       if (!subject) throw new Error(errors.DEFAULT);
 
       const subjectUsers = await subject.getUsers();
