@@ -85,9 +85,9 @@ export class user extends shortcutModel {
   }
 
   /**
-   * Find a record by its id and include its role.
-   * @param {string} id The record id.
-   * @returns An object.
+   * Find a user by its id and include its role.
+   * @param {string} id The user id.
+   * @returns A user object.
    */
   static findWithRole(id) {
     return new Promise((resolve, reject) => {
@@ -95,6 +95,22 @@ export class user extends shortcutModel {
     });
   }
 
+  /**
+   * Find a user by its username.
+   * @param {string} username The user username.
+   * @returns A user object.
+   */
+  static findByUsername(username) {
+    return new Promise((resolve, reject) => {
+      this.findBy({ username: username, deleted_at: null }).then(resolve).catch(reject);
+    });
+  }
+
+  /**
+   * Create a user.
+   * @param args The arguments provided to create the user. Must container `username`, `full_name` and `password`.
+   * @returns The created user.
+   */
   static create({ username, full_name, password }) {
     return new Promise((resolve, reject) => {
       database.models[this.model].create({ username, full_name, password }).then(resolve).catch(reject);
