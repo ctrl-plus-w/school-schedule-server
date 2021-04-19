@@ -131,11 +131,12 @@ export class user extends shortcutModel {
   /**
    * Find a user by its username.
    * @param {string} username The user username.
+   * @param {array} includes The models it should include.
    * @returns A user object.
    */
-  static findByUsername(username) {
+  static findByUsername(username, includes) {
     return new Promise((resolve, reject) => {
-      this.findBy({ username: username, deleted_at: null }).then(resolve).catch(reject);
+      this.findBy({ username: username, deleted_at: null }, includes).then(resolve).catch(reject);
     });
   }
 
