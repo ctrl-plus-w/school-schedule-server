@@ -122,7 +122,7 @@ export const resolver = {
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
-      const user = await userShortcut.find(args.id);
+      const user = await userShortcut.findDeleted(args.id);
       if (!user) throw new UserInputError(errors.DEFAULT);
 
       await user.destroy();
