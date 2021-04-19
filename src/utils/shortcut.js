@@ -122,7 +122,7 @@ export class user extends shortcutModel {
 
   /**
    * Create a user.
-   * @param args The arguments provided to create the user. Must container `username`, `full_name` and `password`.
+   * @param args The arguments provided to create the user. Must contain `username`, `full_name` and `password`.
    * @returns The created user.
    */
   static create({ username, full_name, password }) {
@@ -135,6 +135,17 @@ export class user extends shortcutModel {
 export class subject extends shortcutModel {
   static get model() {
     return 'subject';
+  }
+
+  /**
+   * Create a subject.
+   * @param args The arguments provided to create the subject. Must contain `subject_name`.
+   * @returns The created user.
+   */
+  static create({ subject_name }) {
+    return new Promise((resolve, reject) => {
+      database.models[this.model].create({ subject_name }).then(resolve).catch(reject);
+    });
   }
 }
 
