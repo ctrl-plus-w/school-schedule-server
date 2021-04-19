@@ -1,16 +1,23 @@
-import { QueryTypes, Op } from 'sequelize';
-import { gql } from 'apollo-server-express';
+/* eslint-disable no-unused-vars */
+import { QueryTypes } from 'sequelize';
+import { AuthenticationError, gql } from 'apollo-server-express';
+
 import moment from 'moment';
 
 import { eventObject } from '../utils/relationMapper';
-import { resetTime } from '../utils/date';
+import {
+  user as userShortcut,
+  label as labelShortcut,
+  role as roleShortcut,
+  subject as subjectShortcut,
+  event as eventShortcut,
+} from '../utils/shortcut';
+import { checkIsAdmin, checkIsProfessor } from '../utils/authorization';
 
 import config from '../config';
 import errors from '../config/errors';
 
 import database from '../database';
-
-import sequelize from '../database';
 
 export const typeDefs = gql`
   extend type Query {
@@ -21,15 +28,15 @@ export const typeDefs = gql`
 
     userEvents: [Event!]
     ownedEvents: [Event!]
-    labelEvents(label_name: String!): [Event!]
+
+    labelEvents(id: ID!): [Event!]
   }
 
   extend type Mutation {
-    createEventById(input: EventInputById): Event
-    createEventByName(input: EventInputByName): Event
+    createEvent(input: EventInputById): Event
 
-    deleteEvent(event_id: ID!): Boolean
-    destroyEvent(event_id: ID!): Boolean
+    deleteEvent(id: ID!): Boolean
+    destroyEvent(id: ID!): Boolean
   }
 
   input EventInputById {
@@ -68,70 +75,50 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     event: async (_, args) => {
-      const event = await database.models.event.findByPk(args.id, { where: { deleted_at: null } });
+      const event = await eventShortcut.find(args.id);
       return eventObject(event);
     },
 
     events: async () => {
-      const events = await database.models.event.findAll({ where: { deleted_at: null } });
+      const events = await eventShortcut.findAll();
       return events.map(eventObject);
     },
 
     allEvents: async () => {
-      const events = await database.models.event.findAll();
+      const events = await eventShortcut.findAllDeleted();
       return events.map(eventObject);
     },
 
-    userEvents: async (parent, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+    userEvents: async (_parent, _args, context) => {
+      if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
 
-      const startDate = resetTime(new Date());
-      const endDate = new Date().setDate(new Date().getDate() + 14);
+      const user = await userShortcut.find(context.id, database.models.label);
+      if (!user) throw new AuthenticationError(errors.DEFAULT);
 
-      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.label });
-      if (!user) throw new Error(errors.DEFAULT);
+      const userLabelIds = user.labels.map((label) => label.id);
 
-      const userLabelIds = user.toJSON().labels.map((label) => label.id);
-
-      const events = await database.models.event.findAll({
-        where: { label_id: userLabelIds, start: { [Op.between]: [startDate, endDate] }, deleted_at: null },
-      });
+      const events = await eventShortcut.findAllByLabelIds(userLabelIds);
       return events.map(eventObject);
     },
 
-    ownedEvents: async (parent, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+    ownedEvents: async (_parent, _args, context) => {
+      if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
 
-      const startDate = resetTime(new Date());
-      const endDate = new Date().setDate(new Date().getDate() + 14);
+      const user = await userShortcut.findWithRole(context.id);
+      await checkIsProfessor(user);
 
-      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.label });
-      if (!user) throw new Error(errors.DEFAULT);
-
-      const userOwnedEvents = await database.models.event.findAll({
-        where: { deleted_at: null, start: { [Op.between]: [startDate, endDate] } },
-        include: [{ model: database.models.user, where: { id: context.id } }],
-      });
+      const userOwnedEvents = await eventShortcut.findAll({ model: database.models.user, where: { id: context.id } });
       return userOwnedEvents.map(eventObject);
     },
 
-    labelEvents: async (parent, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+    labelEvents: async (_parent, args, context) => {
+      if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
 
-      const startDate = resetTime(new Date());
-      const endDate = new Date().setDate(new Date().getDate() + 14);
+      const user = await userShortcut.findWithRole(context.id);
+      await checkIsProfessor(user);
 
-      const user = await database.models.user.findByPk(context.id, { where: { deleted_at: null }, include: database.models.role });
-      if (!user) throw new Error(errors.DEFAULT);
-
-      if (user?.role?.role_name !== config.ROLES.PROFESSOR) throw new Error(errors.NOT_ALLOWED);
-
-      const events = await database.models.event.findAll({
-        where: { deleted_at: null, start: { [Op.between]: [startDate, endDate] } },
-        include: [{ model: database.models.label, where: { label_name: args.label_name } }],
-      });
-
-      return events.map(eventObject);
+      const labelEvents = await eventShortcut.findAll({ model: database.models.label, where: { id: args.id } });
+      return labelEvents.map(eventObject);
     },
   },
 
@@ -143,7 +130,7 @@ export const resolvers = {
     // TODO : [x] Check if date is not before today.
     // TODO : [ ] Check if date is a round date. (database collision problems)
 
-    createEventById: async (_, { input: args }, context) => {
+    createEvent: async (_, { input: args }, context) => {
       if (!context?.id) throw new Error(errors.NOT_LOGGED);
 
       const startDate = moment(new Date(args.start));
@@ -169,7 +156,7 @@ export const resolvers = {
       if (!label) throw new Error(errors.DEFAULT);
 
       const sql = `SELECT User.id FROM Event JOIN Label ON Event.label_id = Label.id JOIN UserLabels ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE Event.start = "${startDate.toISOString()}"`;
-      const request = await sequelize.query(sql, { type: QueryTypes.SELECT });
+      const request = await database.query(sql, { type: QueryTypes.SELECT });
 
       const labelUserIds = await label.toJSON().users.map((obj) => obj.id);
       const userIdsFromLabels = request.map((obj) => obj.id);
@@ -192,60 +179,6 @@ export const resolvers = {
 
       await event.setLabel(label);
 
-      await event.setSubject(subject);
-      await event.setUser(user);
-
-      return eventObject(event);
-    },
-
-    createEventByName: async (parent, { input: args }, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
-
-      const startDate = moment(new Date(args.start));
-      if (startDate.isBefore(moment(Date.now()))) throw new Error(errors.DEFAULT);
-
-      const user = await database.models.user.findByPk(context.id, {
-        where: { deleted_at: null },
-        include: [database.models.role, database.models.subject],
-      });
-
-      if (!user) throw new Error("User does't exist.");
-      if (user.role.role_name !== config.ROLES.PROFESSOR) throw new Error(errors.NOT_ALLOWED);
-      if (!user.subjects) throw new Error(errors.DEFAULT);
-
-      const userOwnedEvents = await database.models.event.count({
-        where: { deleted_at: null, start: startDate.toISOString() },
-        include: [{ model: database.models.user, where: { id: context.id, deleted_at: null } }],
-      });
-
-      if (userOwnedEvents > 0) throw new Error(errors.EVENT_TAKEN);
-
-      const label = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null }, include: database.models.user });
-      if (!label) throw new Error(errors.DEFAULT);
-
-      const sql = `SELECT User.id FROM Event JOIN Label ON Event.label_id = Label.id JOIN UserLabels ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE Event.start = "${startDate.toISOString()}" AND Event.deleted_at = null`;
-      const request = await sequelize.query(sql, { type: QueryTypes.SELECT });
-
-      const labelUserIds = await label.users.map((obj) => obj.id);
-      const userIdsFromLabels = request.map((obj) => obj.id);
-
-      const userIds = userIdsFromLabels.filter((id) => labelUserIds.includes(id));
-      if (userIds.length > 0) throw new Error(errors.USER_EVENT_TAKEN);
-
-      const subject = await database.models.subject.findOne({ where: { subject_name: args.subject_name, deleted_at: null } });
-      if (!subject) throw new Error(errors.DEFAULT);
-
-      const userOwnSubject = await user.hasSubject(subject);
-      if (!userOwnSubject) throw new Error(errors.DEFAULT);
-
-      const event = await database.models.event.create({
-        start: startDate.toISOString(),
-        link: args.link ? args.link : '',
-        description: args.description,
-        obligatory: args.obligatory,
-      });
-
-      await event.setLabel(label);
       await event.setSubject(subject);
       await event.setUser(user);
 
