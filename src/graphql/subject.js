@@ -1,6 +1,7 @@
 import { ForbiddenError, gql, UserInputError } from 'apollo-server-core';
 
 import errors from '../config/errors';
+import database from '../database';
 
 import { getObjectWithUsers } from '../utils/relationMapper';
 import { checkIsAdmin } from '../utils/authorization';
@@ -66,11 +67,10 @@ export const resolvers = {
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
-      const subject = await subjectShortcut.find(args.id);
+      const subject = await subjectShortcut.find(args.id, database.models.user);
       if (!subject) throw new UserInputError(errors.DEFAULT);
 
-      const subjectUsers = await subject.getUsers();
-      if (subjectUsers.length > 0) throw new UserInputError(errors.SUBJECT_CASCADE);
+      if (subject?.users.length > 0) throw new UserInputError(errors.SUBJECT_CASCADE);
 
       await subject.update({ deleted_at: Date.now() });
       return true;
@@ -82,11 +82,10 @@ export const resolvers = {
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
-      const subject = await subjectShortcut.findDeleted(args.id);
-      if (!subject) throw new Error(errors.DEFAULT);
+      const subject = await subjectShortcut.findDeleted(args.id, database.models.user);
+      if (!subject) throw new UserInputError(errors.DEFAULT);
 
-      const subjectUsers = await subject.getUsers();
-      if (subjectUsers.length > 0) throw new Error(errors.SUBJECT_CASCADE);
+      if (subject?.users.length > 0) throw new UserInputError(errors.SUBJECT_CASCADE);
 
       await subject.destroy();
       return true;
