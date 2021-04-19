@@ -8,7 +8,7 @@ class shortcutModel {
   /**
    * Find a record by its id with the given conditions.
    * @param {string} id The record id.
-   * @param {object} conditions The models it should include.
+   * @param {object} conditions The required conditions.
    * @param {array} includes The models it should include.
    * @returns An object.
    */
@@ -44,7 +44,7 @@ class shortcutModel {
 
   /**
    * Find a record by the given condition.
-   * @param {object} conditions The conditions to find the record.
+   * @param {object} conditions The required conditions.
    * @param {array} includes The models it should include.
    * @returns An object.
    */
@@ -57,7 +57,7 @@ class shortcutModel {
   /**
    * Find a record by its name.
    * @param {string} name The name of the record. (e.g. label > { label_name : 'name' })
-   * @param {array} includesThe models it shoud include.
+   * @param {array} includes The models it shoud include.
    * @returns An object.
    */
   static findByName(name, includes = []) {
@@ -70,7 +70,7 @@ class shortcutModel {
 
   /**
    * Get all records with the given conditions.
-   * @param {object} condition The condition to find the record.
+   * @param {object} conditions The required conditions.
    * @param {array} includes The models it should include.
    * @returns An array of objects.
    */
@@ -190,6 +190,9 @@ export class event extends shortcutModel {
     return 'event';
   }
 
+  /**
+   * Get the two week interval for the database request.
+   */
   static get startInterval() {
     const startDate = resetTime(new Date());
     const endDate = new Date(new Date().setDate(new Date().getDate() + 14));
@@ -197,6 +200,11 @@ export class event extends shortcutModel {
     return { [Op.between]: [startDate, endDate] };
   }
 
+  /**
+   * Get all the events which aren't deleted in the two weeks interval.
+   * @param {array} includes The models it should include.
+   * @returns An array of event objects.
+   */
   static findAll(includes = []) {
     const startDate = resetTime(new Date());
     const endDate = new Date(new Date().setDate(new Date().getDate() + 14));
@@ -208,6 +216,12 @@ export class event extends shortcutModel {
     });
   }
 
+  /**
+   * Get all the events which aren't deleted in the two weeks interval with the given conditions.
+   * @param {object} conditions The required conditions.
+   * @param {array} includes The models it should include.
+   * @returns An array of event objects.
+   */
   static findAllBy(conditions, includes = []) {
     return new Promise((resolve, reject) => {
       this.findAllWithCondition({ ...conditions, start: this.startInterval, deleted_at: null }, includes)
@@ -216,6 +230,12 @@ export class event extends shortcutModel {
     });
   }
 
+  /**
+   * Get all the events where the label is in the given array which aren't deleted.
+   * @param {array} labelIds The array of labels ids.
+   * @param {array} includes The models it should include.
+   * @returns An array of event objects.
+   */
   static findAllByLabelIds(labelIds, includes = []) {
     return new Promise((resolve, reject) => {
       this.findAllBy({ labelId: { [Op.in]: labelIds } }, includes)
