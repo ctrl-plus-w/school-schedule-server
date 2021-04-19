@@ -110,26 +110,26 @@ export const resolver = {
     },
 
     deleteUser: async (_parent, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
       const user = await userShortcut.find(args.id);
-      if (!user) throw new Error(errors.DEFAULT);
+      if (!user) throw new UserInputError(errors.DEFAULT);
 
       await user.update({ deleted_at: Date.now() });
       return true;
     },
 
     destroyUser: async (_parent, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
       const user = await userShortcut.find(args.id);
-      if (!user) throw new Error(errors.DEFAULT);
+      if (!user) throw new UserInputError(errors.DEFAULT);
 
       await user.destroy();
       return true;
@@ -137,45 +137,45 @@ export const resolver = {
 
     /* +---------------------------------------------+ Label */
     addLabel: async (_parent, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
       const user = await userShortcut.find(args.user_id);
-      if (!user) throw new Error(errors.DEFAULT);
+      if (!user) throw new UserInputError(errors.DEFAULT);
 
       const label = await labelShortcut.find(args.label_id);
-      if (!label) throw new Error(errors.DEFAULT);
+      if (!label) throw new UserInputError(errors.DEFAULT);
 
       await user.addLabel(label);
       return true;
     },
 
     removeLabel: async (_parent, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
       const user = await userShortcut.find(args.user_id);
-      if (!user) throw new Error(errors.DEFAULT);
+      if (!user) throw new UserInputError(errors.DEFAULT);
 
       const label = await labelShortcut.find(args.label_id);
-      if (!label) throw new Error(errors.DEFAULT);
+      if (!label) throw new UserInputError(errors.DEFAULT);
 
       await user.removeLabel(label);
       return true;
     },
 
     clearLabels: async (_parent, args, context) => {
-      if (!context?.id) throw new Error(errors.NOT_LOGGED);
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
       const user = await userShortcut.find(args.user_id);
-      if (!user) throw new Error(errors.DEFAULT);
+      if (!user) throw new UserInputError(errors.DEFAULT);
 
       await user.removeLabels();
       return true;
