@@ -3,7 +3,7 @@ import { gql } from 'apollo-server-core';
 import errors from '../config/errors';
 import database from '../database';
 
-import { getTableWithUsers } from '../utils/relationMapper';
+import { getObjectWithUsers } from '../utils/relationMapper';
 
 export const typeDefs = gql`
   extend type Query {
@@ -39,12 +39,12 @@ export const resolvers = {
   Query: {
     label: async (_parent, args) => {
       const label = await database.models.label.findByPk(args.id, { where: { deleted_at: null } });
-      return getTableWithUsers(label);
+      return getObjectWithUsers(label);
     },
 
     labels: async () => {
       const labels = await database.models.label.findAll({ where: { deleted_at: null } });
-      return labels.map(getTableWithUsers);
+      return labels.map(getObjectWithUsers);
     },
   },
 
@@ -54,7 +54,7 @@ export const resolvers = {
       if (labelExist) throw new Error(errors.LABEL_DUPLICATION);
 
       const label = await database.models.label.create({ label_name: args.label_name /* label_display_name: args.label_display_name */ });
-      return getTableWithUsers(label);
+      return getObjectWithUsers(label);
     },
 
     deleteLabelById: async (_parent, args) => {
