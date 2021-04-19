@@ -165,4 +165,15 @@ export class role extends shortcutModel {
   static get model() {
     return 'role';
   }
+
+  /**
+   * Create a role.
+   * @param args The arguments provided to create the role. Must contain `role_name`.
+   * @returns The created user.
+   */
+  static create({ role_name }) {
+    return new Promise((resolve, reject) => {
+      database.models[this.model].create({ role_name }).then(resolve).catch(reject);
+    });
+  }
 }
