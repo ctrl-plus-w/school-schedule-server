@@ -22,12 +22,9 @@ export const typeDefs = gql`
     deleteUser(id: ID!): Boolean
     destroyUser(id: ID!): Boolean
 
-    addLabelById(user_id: ID!, label_id: ID!): Boolean
-    addLabelByName(username: String!, label_name: String!): Boolean
-    removeLabelById(user_id: ID!, label_id: ID!): Boolean
-    removeLabelByName(username: String!, label_name: String!): Boolean
-    clearLabelsById(user_id: ID!): Boolean
-    clearLabelsByName(username: String!): Boolean
+    addLabel(user_id: String!, label_id: String!): Boolean
+    removeLabel(user_id: String!, label_id: String!): Boolean
+    clearLabels(user_id: String!): Boolean
 
     addSubjectById(user_id: ID!, subject_id: ID!): Boolean
     addSubjectByName(username: String!, subject_name: String!): Boolean
@@ -89,7 +86,7 @@ export const resolver = {
       const loggedUser = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(loggedUser);
 
-      const userExist = await userShortcut.findBy({ username: args.username });
+      const userExist = await userShortcut.findByUsername(args.username);
       if (userExist) throw new UserInputError(errors.USER_DUPLICATION);
 
       const password = await bcrypt.hash(args.password, 12);
@@ -139,61 +136,46 @@ export const resolver = {
     },
 
     /* +---------------------------------------------+ Label */
-    addLabelById: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+    addLabel: async (_parent, args, context) => {
+      if (!context?.id) throw new Error(errors.NOT_LOGGED);
 
-      const label = await database.models.label.findByPk(args.label_id, { where: { deleted_at: null } });
-      if (!label) throw new Error("Label doesn't exist.");
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-      await user.addLabel(label);
-      return true;
-    },
+      const user = await userShortcut.find(args.user_id);
+      if (!user) throw new Error(errors.DEFAULT);
 
-    addLabelByName: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
-
-      const label = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null } });
-      if (!label) throw new Error("Label doesn't exist.");
+      const label = await labelShortcut.find(args.label_id);
+      if (!label) throw new Error(errors.DEFAULT);
 
       await user.addLabel(label);
       return true;
     },
 
-    removeLabelById: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+    removeLabel: async (_parent, args, context) => {
+      if (!context?.id) throw new Error(errors.NOT_LOGGED);
 
-      const label = await database.models.label.findByPk(args.label_id, { where: { deleted_at: null } });
-      if (!label) throw new Error("Label doesn't exist.");
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-      await user.removeLabel(label);
-      return true;
-    },
+      const user = await userShortcut.find(args.user_id);
+      if (!user) throw new Error(errors.DEFAULT);
 
-    removeLabelByName: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
-
-      const label = await database.models.label.findOne({ where: { label_name: args.label_name, deleted_at: null } });
-      if (!label) throw new Error("Label doesn't exist.");
+      const label = await labelShortcut.find(args.label_id);
+      if (!label) throw new Error(errors.DEFAULT);
 
       await user.removeLabel(label);
       return true;
     },
 
-    clearLabelsById: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+    clearLabels: async (_parent, args, context) => {
+      if (!context?.id) throw new Error(errors.NOT_LOGGED);
 
-      await user.removeLabels();
-      return true;
-    },
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-    clearLabelsByName: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+      const user = await userShortcut.find(args.user_id);
+      if (!user) throw new Error(errors.DEFAULT);
 
       await user.removeLabels();
       return true;
