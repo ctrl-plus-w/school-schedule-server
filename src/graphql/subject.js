@@ -50,8 +50,8 @@ export const resolvers = {
     createSubject: async (_parent, { input: args }, context) => {
       if (!context?.id) throw new ForbiddenError(errors.NOT_ALLOWED);
 
-      const user = await userShortcut.find(context.id);
-      await checkIsAdmin(user);
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
       const subjectExist = await subjectShortcut.findByName(args.subject_name);
       if (subjectExist) throw new UserInputError(errors.SUBJECT_DUPLICATION);
@@ -63,8 +63,8 @@ export const resolvers = {
     deleteSubject: async (_parent, args, context) => {
       if (!context?.id) throw new ForbiddenError(errors.NOT_ALLOWED);
 
-      const user = await userShortcut.find(context.id);
-      await checkIsAdmin(user);
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
       const subject = await subjectShortcut.find(args.id);
       if (!subject) throw new UserInputError(errors.DEFAULT);
@@ -79,8 +79,8 @@ export const resolvers = {
     destroySubject: async (_parent, args, context) => {
       if (!context?.id) throw new ForbiddenError(errors.NOT_ALLOWED);
 
-      const user = await userShortcut.find(context.id);
-      await checkIsAdmin(user);
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
       const subject = await subjectShortcut.findDeleted(args.id);
       if (!subject) throw new Error(errors.DEFAULT);
