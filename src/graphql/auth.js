@@ -2,6 +2,8 @@ import { gql, AuthenticationError } from 'apollo-server-core';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
+import { user as userShortcut } from '../utils/shortcut';
+
 import config from '../config';
 import errors from '../config/errors';
 import database from '../database';
@@ -23,23 +25,16 @@ export const typeDefs = gql`
 export const resolvers = {
   Mutation: {
     login: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null }, include: database.models.role });
+      const user = await userShortcut.findByUsername(args.username, [database.models.role]);
       if (!user) throw new AuthenticationError(errors.BAD_CREDENTIAL);
 
       const isPasswordValid = await bcrypt.compare(args.password, user.password);
       if (!isPasswordValid) throw new AuthenticationError(errors.BAD_CREDENTIAL);
 
-      const token = jwt.sign(
-        {
-          id: user.id,
-          role: { id: user.role.id, role_name: user.role.role_name },
-        },
-        config.JWT_KEY,
-        {
-          expiresIn: `${config.JWT_TOKEN_EXPIRATION}h`,
-        }
-      );
+      const payload = { id: user.id, role: { id: user.role.id, role_name: user.role.role_name } };
+      const options = { expiresIn: `${config.JWT_TOKEN_EXPIRATION}h` };
 
+      const token = jwt.sign(payload, config.JWT_KEY, options);
       const userJSON = user.toJSON();
 
       return {
