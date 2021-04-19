@@ -27,6 +27,18 @@ class shortcutModel {
   }
 
   /**
+   * Find a record by its id whether he is deleted or not.
+   * @param {string} id The record id.
+   * @param {array} includes The models it should include.
+   * @returns An object.
+   */
+  static findDeleted(id, includes = []) {
+    return new Promise((resolve, reject) => {
+      this.findWithCondition(id, includes).then(resolve).catch(reject);
+    });
+  }
+
+  /**
    * Find a record by the given condition.
    * @param {object} conditions The conditions to find the record.
    * @param {array} includes The models it should include.
