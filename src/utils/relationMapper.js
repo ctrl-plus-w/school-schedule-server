@@ -1,9 +1,9 @@
 import { getDates } from './date';
 
-export const getTableWithUsers = (table) => ({
-  ...table.toJSON(),
-  ...getDates(table),
-  users: () => getUsers(table),
+export const getObjectWithUsers = (object) => ({
+  ...object.toJSON(),
+  ...getDates(object),
+  users: () => getUsers(object),
 });
 
 export const userObject = (user) => ({
@@ -25,12 +25,12 @@ export const eventObject = (event) => ({
 
 const getLabel = async (model) => {
   const label = await model.getLabel();
-  return label ? getTableWithUsers(label) : null;
+  return label ? getObjectWithUsers(label) : null;
 };
 
 const getSubject = async (model) => {
   const subject = await model.getSubject();
-  return subject ? getTableWithUsers(subject) : null;
+  return subject ? getObjectWithUsers(subject) : null;
 };
 
 const getUser = async (model) => {
@@ -40,17 +40,17 @@ const getUser = async (model) => {
 
 export const getLabels = async (model) => {
   const labels = await model.getLabels();
-  return labels.map(getTableWithUsers);
+  return labels.map(getObjectWithUsers);
 };
 
 export const getRole = async (model) => {
   const role = await model.getRole();
-  return role ? getTableWithUsers(role) : null;
+  return role ? getObjectWithUsers(role) : null;
 };
 
 export const getSubjects = async (model) => {
   const subjects = await model.getSubjects();
-  return subjects.map(getTableWithUsers);
+  return subjects.map(getObjectWithUsers);
 };
 
 export const getUsers = async (model) => {
