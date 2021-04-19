@@ -1,3 +1,7 @@
+import { Op } from 'sequelize';
+
+import { resetTime } from '../utils/date';
+
 import database from '../database';
 
 class shortcutModel {
@@ -174,6 +178,46 @@ export class role extends shortcutModel {
   static create({ role_name }) {
     return new Promise((resolve, reject) => {
       database.models[this.model].create({ role_name }).then(resolve).catch(reject);
+    });
+  }
+}
+
+export class event extends shortcutModel {
+  static get model() {
+    return 'event';
+  }
+
+  static get startInterval() {
+    const startDate = resetTime(new Date());
+    const endDate = new Date(new Date().setDate(new Date().getDate() + 14));
+
+    return { [Op.between]: [startDate, endDate] };
+  }
+
+  static findAll(includes = []) {
+    const startDate = resetTime(new Date());
+    const endDate = new Date(new Date().setDate(new Date().getDate() + 14));
+
+    return new Promise((resolve, reject) => {
+      return this.findAllWithCondition({ start: { [Op.between]: [startDate, endDate] }, deleted_at: null }, includes)
+        .then(resolve)
+        .catch(reject);
+    });
+  }
+
+  static findAllBy(conditions, includes = []) {
+    return new Promise((resolve, reject) => {
+      this.findAllWithCondition({ ...conditions, start: this.startInterval, deleted_at: null }, includes)
+        .then(resolve)
+        .catch(reject);
+    });
+  }
+
+  static findAllByLabelIds(labelIds, includes = []) {
+    return new Promise((resolve, reject) => {
+      this.findAllBy({ labelId: { [Op.in]: labelIds } }, includes)
+        .then(resolve)
+        .catch(reject);
     });
   }
 }
