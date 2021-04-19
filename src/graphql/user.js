@@ -5,8 +5,6 @@ import { user as userShortcut, label as labelShortcut, subject as subjectShortcu
 import { userObject } from '../utils/relationMapper';
 import { checkIsAdmin } from '../utils/authorization';
 
-import database from '../database';
-
 import errors from '../config/errors';
 
 export const typeDefs = gql`
@@ -30,8 +28,7 @@ export const typeDefs = gql`
     removeSubject(user_id: ID!, subject_id: ID!): Boolean
     clearSubjects(user_id: ID!): Boolean
 
-    setRoleById(user_id: ID!, role_id: ID!): Boolean
-    setRoleByName(username: String!, role_name: String!): Boolean
+    setRole(user_id: ID!, role_id: ID!): Boolean
   }
 
   input UserInput {
@@ -225,23 +222,17 @@ export const resolver = {
     },
 
     /* +---------------------------------------------+ Role */
-    setRoleById: async (_parent, args) => {
-      const user = await database.models.user.findByPk(args.user_id, { where: { deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
+    setRole: async (_parent, args, context) => {
+      if (!context?.id) throw new ForbiddenError(errors.NOT_LOGGED);
 
-      const role = await database.models.role.findByPk(args.roleId, { where: { deleted_at: null } });
-      if (!role) throw new Error("Role doesn't exist.");
+      const loggedUser = await userShortcut.findWithRole(context.id);
+      await checkIsAdmin(loggedUser);
 
-      await user.setRole(role);
-      return true;
-    },
+      const user = await userShortcut.find(args.user_id);
+      if (!user) throw new UserInputError(errors.DEFAULT);
 
-    setRoleByName: async (_parent, args) => {
-      const user = await database.models.user.findOne({ where: { username: args.username, deleted_at: null } });
-      if (!user) throw new Error("User doesn't exist.");
-
-      const role = await database.models.role.findOne({ where: { role_name: args.role_name, deleted_at: null } });
-      if (!role) throw new Error("Role doesn't exist.");
+      const role = await roleShortcut.find(args.role_id);
+      if (!role) throw new UserInputError(errors.DEFAULT);
 
       await user.setRole(role);
       return true;
