@@ -123,6 +123,7 @@ export const resolvers = {
       const usersId = await label.users.map((user) => user.id);
 
       const usersIdStr = usersId.map((id) => `'${id}'`).join(', ');
+      if (usersIdStr.length === 0) return [];
 
       const labelsSQL = `SELECT Label.id FROM UserLabels JOIN Label ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE User.id IN(${usersIdStr})`;
       const labels = await database.query(labelsSQL, { type: QueryTypes.SELECT });
