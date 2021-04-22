@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon --exec 'clear && npm run babel-node src/index.js'",
-    "babel-node": "babel-node --presets='@babel/preset-env' --ignore='foo|bar|baz'"
+    "babel-node": "babel-node --presets='@babel/preset-env' --ignore='foo|bar|baz'",
+    "seed": "npm run babel-node src/database/seed.js"
   },
   "dependencies": {
     "apollo-server-express": "^2.22.2",
