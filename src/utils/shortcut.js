@@ -159,12 +159,12 @@ export class subject extends shortcutModel {
 
   /**
    * Create a subject.
-   * @param args The arguments provided to create the subject. Must contain `subject_name`.
+   * @param args The arguments provided to create the subject. Must contain `subject_name` and `color`.
    * @returns The created user.
    */
-  static create({ subject_name }) {
+  static create({ subject_name, color }) {
     return new Promise((resolve, reject) => {
-      database.models[this.model].create({ subject_name }).then(resolve).catch(reject);
+      database.models[this.model].create({ subject_name, color }).then(resolve).catch(reject);
     });
   }
 }

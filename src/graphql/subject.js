@@ -23,11 +23,13 @@ export const typeDefs = gql`
 
   input SubjectInput {
     subject_name: String!
+    color: String!
   }
 
   type Subject {
     id: ID!
     subject_name: String!
+    color: String!
     users: [User!]
     created_at: String!
     updated_at: String
@@ -57,7 +59,7 @@ export const resolvers = {
       const subjectExist = await subjectShortcut.findByName(args.subject_name);
       if (subjectExist) throw new UserInputError(errors.SUBJECT_DUPLICATION);
 
-      const subject = await subjectShortcut.create({ subject_name: args.subject_name });
+      const subject = await subjectShortcut.create({ subject_name: args.subject_name, color: args.color });
       return getObjectWithUsers(subject);
     },
 
