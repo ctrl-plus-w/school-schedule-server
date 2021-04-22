@@ -11,6 +11,8 @@ import database from '../database';
 export const typeDefs = gql`
   extend type Mutation {
     login(username: String!, password: String!): AuthData!
+
+    verifyToken: AuthData!
   }
 
   type AuthData {
@@ -18,7 +20,6 @@ export const typeDefs = gql`
     role: String!
     full_name: String!
     token: String!
-    token_expiration: Int!
   }
 `;
 
@@ -31,18 +32,22 @@ export const resolvers = {
       const isPasswordValid = await bcrypt.compare(args.password, user.password);
       if (!isPasswordValid) throw new AuthenticationError(errors.BAD_CREDENTIAL);
 
-      const payload = { id: user.id, role: { id: user.role.id, role_name: user.role.role_name } };
+      const payload = { id: user.id, role: user.role.role_name, full_name: user.full_name };
       const options = { expiresIn: `${config.JWT_TOKEN_EXPIRATION}h` };
 
       const token = jwt.sign(payload, config.JWT_KEY, options);
-      const userJSON = user.toJSON();
+
+      return { ...payload, token };
+    },
+
+    verifyToken: async (_parent, _args, context) => {
+      if (!context.auth) throw new Error(errors.NOT_ALLOWED);
 
       return {
-        id: userJSON.id,
-        role: userJSON.role.role_name,
-        full_name: userJSON.full_name,
-        token: token,
-        token_expiration: config.JWT_TOKEN_EXPIRATION,
+        id: context.id,
+        role: context.role,
+        full_name: context.full_name,
+        token: context.token,
       };
     },
   },

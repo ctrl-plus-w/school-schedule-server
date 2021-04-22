@@ -18,6 +18,8 @@ export default async ({ req }) => {
       auth: true,
       id: decodedToken.id,
       role: decodedToken.role,
+      full_name: decodedToken.full_name,
+      token: token,
     };
   } catch (err) {
     return { auth: false };
