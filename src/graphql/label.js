@@ -52,20 +52,20 @@ export const resolvers = {
     createLabel: async (_parent, { input: args }, context) => {
       if (!context?.id) throw new AuthenticationError(errors.NOT_ALLOWED);
 
-      const user = await userShortcut.find(context.id);
+      const user = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(user);
 
       const labelExist = await labelShortcut.findByName(args.label_name);
       if (labelExist) throw new UserInputError(errors.LABEL_DUPLICATION);
 
-      const label = await database.models.label.create({ label_name: args.label_name /* label_display_name: args.label_display_name */ });
+      const label = await database.models.label.create({ label_name: args.label_name });
       return getObjectWithUsers(label);
     },
 
     deleteLabel: async (_parent, args, context) => {
       if (!context?.id) throw new AuthenticationError(errors.NOT_ALLOWED);
 
-      const user = await userShortcut.find(context.id);
+      const user = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(user);
 
       const label = await labelShortcut.find(args.id, database.models.user);
@@ -80,7 +80,7 @@ export const resolvers = {
     destroyLabel: async (_parent, args, context) => {
       if (!context?.id) throw new AuthenticationError(errors.NOT_ALLOWED);
 
-      const user = await userShortcut.find(context.id);
+      const user = await userShortcut.findWithRole(context.id);
       await checkIsAdmin(user);
 
       const label = await labelShortcut.find(args.id, database.models.user);

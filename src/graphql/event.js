@@ -84,7 +84,7 @@ export const resolvers = {
     userEvents: async (_parent, _args, context) => {
       if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
 
-      const user = await userShortcut.find(context.id, database.models.label);
+      const user = await userShortcut.findWithRole(context.id, database.models.label);
       if (!user) throw new AuthenticationError(errors.DEFAULT);
 
       const userLabelIds = user.labels.map((label) => label.id);
