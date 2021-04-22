@@ -208,9 +208,9 @@ export const resolvers = {
       if (!userIsOwner) throw new ForbiddenError(errors.NOT_EVENT_OWNER);
 
       await event.update({
-        description: args.description ? args.description : event.description,
-        link: args.link ? args.link : event.link,
-        obligatory: args.obligatory ? args.obligatory : event.obligatory,
+        description: 'description' in args ? args.description : event.description,
+        link: 'link' in args ? args.link : event.link,
+        obligatory: 'obligatory' in args ? args.obligatory : event.obligatory,
       });
       return true;
     },
