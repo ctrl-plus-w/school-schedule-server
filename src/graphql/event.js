@@ -36,6 +36,8 @@ export const typeDefs = gql`
   extend type Mutation {
     createEvent(input: EventInput): Event
 
+    updateEvent(id: ID!, description: String, link: String, obligatory: Boolean): Boolean
+
     deleteEvent(id: ID!): Boolean
     destroyEvent(id: ID!): Boolean
   }
@@ -191,6 +193,26 @@ export const resolvers = {
       await event.setUser(user);
 
       return eventObject(event);
+    },
+
+    updateEvent: async (_, args, context) => {
+      if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
+
+      const loggedUser = await userShortcut.findWithRole(context.id, [database.models.subject]);
+      await checkIsProfessor(loggedUser);
+
+      const event = await eventShortcut.find(args.id, [database.models.user]);
+      if (!event) throw new UserInputError(errors.DEFAULT);
+
+      const userIsOwner = event.user.id === loggedUser.id;
+      if (!userIsOwner) throw new ForbiddenError(errors.NOT_EVENT_OWNER);
+
+      await event.update({
+        description: args.description ? args.description : event.description,
+        link: args.link ? args.link : event.link,
+        obligatory: args.obligatory ? args.obligatory : event.obligatory,
+      });
+      return true;
     },
 
     deleteEvent: async (_, args, context) => {
