@@ -5,12 +5,11 @@
   "scripts": {
     "dev": "nodemon --exec 'clear && npm run babel-node src/index.js'",
     "babel-node": "babel-node --presets='@babel/preset-env' --ignore='foo|bar|baz'",
-    "seed": "npm run babel-node src/database/seed.js",
-    "sync": "npm run babel-node src/database/sync.js",
     "clean": "rm -rf build && mkdir build",
     "build-server": "npx babel -d ./build ./src -s",
-    "build": "npm run clean && npm run build-server",
-    "start": "node ./build/index.js"
+    "build": "npm run clean && npm run build-server && npm run seed",
+    "start": "node ./build/index.js",
+    "seed": "node ./build/database/seed.js"
   },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
