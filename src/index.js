@@ -1,9 +1,6 @@
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
-import morgan from 'morgan';
 import cors from 'cors';
-
-import config from './config';
 
 import isAuth from './middlewares/is-auth';
 
@@ -13,7 +10,7 @@ import { resolvers, typeDefs } from './graphql';
   const app = express();
 
   // Middlewares
-  app.use(morgan('dev'));
+  // app.use(morgan('dev'));
   app.use(express.json());
   app.use(cors({ origin: '*' }));
 
@@ -33,6 +30,6 @@ import { resolvers, typeDefs } from './graphql';
   server.applyMiddleware({ app });
 
   // Start server.
-  const PORT = config.PORT || 5000;
+  const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => console.log(`App started on port ${PORT} . http://localhost:${PORT} `));
 })();
