@@ -36,5 +36,5 @@ import { resolvers, typeDefs } from './graphql';
 
   // Start server.
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => console.log(`App started on port ${PORT} . http://localhost:${PORT} `));
+  app.listen(PORT, () => console.log(`App started.`));
 })();
