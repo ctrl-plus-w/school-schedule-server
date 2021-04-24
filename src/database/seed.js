@@ -61,7 +61,7 @@ database.models.user
     {
       full_name: 'admin',
       username: 'admin',
-      password: '$2y$12$Gjah1.kWTAwcg1nPiEcIPeH83Q9BESJq21nWTDdZ7Duwu0qC8BdqG',
+      password: '$2b$12$.T.t8SeK2MyAeBvZAoirQOYGVZBAFKO2VyiFQ/Jedf/0JQD5CtVwC',
       role: {
         role_name: 'Admin',
       },
