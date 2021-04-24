@@ -8,7 +8,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 (async () => {
   await _database.default.sync({
-    alter: true
+    force: true
   });
 })();
 //# sourceMappingURL=sync.js.map

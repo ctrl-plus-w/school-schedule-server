@@ -41,6 +41,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
   }); // Start server.
 
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => console.log("App started on port ".concat(PORT, " . http://localhost:").concat(PORT, " ")));
+  app.listen(PORT, () => console.log("App started."));
 })();
 //# sourceMappingURL=index.js.map

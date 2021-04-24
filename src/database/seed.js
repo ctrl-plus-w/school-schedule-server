@@ -56,20 +56,18 @@ const labels = [
   'Term6',
 ];
 
-(async () => {
-  // await database.models.subject.bulkCreate(subjects.map((subject) => ({ subject_name: subject })));
-  // await database.models.label.bulkCreate(labels.map((label) => ({ label_name: label })));
-
-  const adminRole = await database.models.role.findOne({ where: { role_name: 'Admin' } });
-  if (adminRole) return;
-
-  await database.models.role.create({ role_name: 'Admin' });
-
-  const admin = await database.models.user.create({
-    full_name: 'admin',
-    username: 'admin',
-    password: '$2y$12$Gjah1.kWTAwcg1nPiEcIPeH83Q9BESJq21nWTDdZ7Duwu0qC8BdqG',
-  });
-
-  await admin.setRole(adminRole);
-})();
+database.models.user
+  .create(
+    {
+      full_name: 'admin',
+      username: 'admin',
+      password: '$2y$12$Gjah1.kWTAwcg1nPiEcIPeH83Q9BESJq21nWTDdZ7Duwu0qC8BdqG',
+      role: {
+        role_name: 'Admin',
+      },
+    },
+    {
+      include: database.models.role,
+    }
+  )
+  .then(console.log);
