@@ -1,7 +1,5 @@
 "use strict";
 
-require("regenerator-runtime/runtime");
-
 var _apolloServerExpress = require("apollo-server-express");
 
 var _express = _interopRequireDefault(require("express"));
