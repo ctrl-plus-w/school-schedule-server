@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports["default"] = void 0;
+exports.default = void 0;
 var _default = {
   DEFAULT: "Un probl\xE8me est servenu.",
   NOT_LOGGED: "Vous devez \xEAtre connect\xE9.",
@@ -20,5 +20,5 @@ var _default = {
   ROLE_CASCADE: "Certains utilisateurs sont li\xE9s \xE0 ce role.",
   BAD_CREDENTIAL: "Le nom d'utilisateur ou le mot de passe est \xE9ronn\xE9."
 };
-exports["default"] = _default;
+exports.default = _default;
 //# sourceMappingURL=errors.js.map

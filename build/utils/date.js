@@ -5,17 +5,19 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.resetTime = exports.getDates = exports.dateToString = void 0;
 
-var dateToString = function dateToString(date) {
+const dateToString = date => {
   if (!date) return null;
   return new Date(date).toISOString();
 };
 
 exports.dateToString = dateToString;
 
-var getDates = function getDates(dbObject) {
-  var created_at = dbObject.created_at,
-      updated_at = dbObject.updated_at,
-      deleted_at = dbObject.deleted_at;
+const getDates = dbObject => {
+  const {
+    created_at,
+    updated_at,
+    deleted_at
+  } = dbObject;
   return {
     created_at: dateToString(created_at),
     updated_at: dateToString(updated_at),
@@ -25,7 +27,7 @@ var getDates = function getDates(dbObject) {
 
 exports.getDates = getDates;
 
-var resetTime = function resetTime(date) {
+const resetTime = date => {
   date.setHours(0);
   date.setMinutes(0);
   date.setSeconds(0);

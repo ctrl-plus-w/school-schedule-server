@@ -1,9 +1,8 @@
-import 'core-js/stable';
-import 'regenerator-runtime/runtime';
-
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
 import cors from 'cors';
+
+import database from './database';
 
 import isAuth from './middlewares/is-auth';
 
@@ -31,6 +30,9 @@ import { resolvers, typeDefs } from './graphql';
   // Graphql
   const server = new ApolloServer({ typeDefs, resolvers, context: isAuth });
   server.applyMiddleware({ app });
+
+  // Databse syncing
+  database.sync({ alter: true });
 
   // Start server.
   const PORT = process.env.PORT || 5000;

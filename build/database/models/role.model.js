@@ -3,11 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports["default"] = void 0;
+exports.default = void 0;
 
 var _sequelize = require("sequelize");
 
-var _default = function _default(sequelize) {
+var _default = sequelize => {
   sequelize.define('role', {
     id: {
       type: _sequelize.DataTypes.UUID,
@@ -37,5 +37,5 @@ var _default = function _default(sequelize) {
   });
 };
 
-exports["default"] = _default;
+exports.default = _default;
 //# sourceMappingURL=role.model.js.map

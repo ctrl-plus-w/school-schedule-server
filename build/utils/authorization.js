@@ -5,44 +5,40 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.checkIsAdmin = exports.checkIsProfessor = exports.isAdmin = exports.isProfessor = exports.role = void 0;
 
+require("core-js/modules/es.promise.js");
+
 var _errors = _interopRequireDefault(require("../config/errors"));
 
 var _config = _interopRequireDefault(require("../config"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var role = function role(user) {
-  return user.role.role_name;
-};
+const role = user => user.role.role_name;
 
 exports.role = role;
 
-var isProfessor = function isProfessor(role) {
-  return role === _config["default"].ROLES.PROFESSOR || role === _config["default"].ROLES.ADMIN;
-};
+const isProfessor = role => role === _config.default.ROLES.PROFESSOR || role === _config.default.ROLES.ADMIN;
 
 exports.isProfessor = isProfessor;
 
-var isAdmin = function isAdmin(role) {
-  return role === _config["default"].ROLES.ADMIN;
-};
+const isAdmin = role => role === _config.default.ROLES.ADMIN;
 
 exports.isAdmin = isAdmin;
 
-var checkIsProfessor = function checkIsProfessor(user) {
-  return new Promise(function (resolve, reject) {
-    if (!user) reject(_errors["default"].DEFAULT);
-    if (!isProfessor(role(user))) reject(_errors["default"].NOT_ALLOWED);
+const checkIsProfessor = user => {
+  return new Promise((resolve, reject) => {
+    if (!user) reject(_errors.default.DEFAULT);
+    if (!isProfessor(role(user))) reject(_errors.default.NOT_ALLOWED);
     resolve();
   });
 };
 
 exports.checkIsProfessor = checkIsProfessor;
 
-var checkIsAdmin = function checkIsAdmin(user) {
-  return new Promise(function (resolve, reject) {
-    if (!user) reject(_errors["default"].DEFAULT);
-    if (!isAdmin(role(user))) reject(_errors["default"].NOT_ALLOWED);
+const checkIsAdmin = user => {
+  return new Promise((resolve, reject) => {
+    if (!user) reject(_errors.default.DEFAULT);
+    if (!isAdmin(role(user))) reject(_errors.default.NOT_ALLOWED);
     resolve();
   });
 };
