@@ -1,3 +1,5 @@
+import 'regenerator-runtime/runtime';
+
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
 import cors from 'cors';

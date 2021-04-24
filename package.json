@@ -3,11 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node src/index.js",
     "dev": "nodemon --exec 'clear && npm run babel-node src/index.js'",
     "babel-node": "babel-node --presets='@babel/preset-env' --ignore='foo|bar|baz'",
     "seed": "npm run babel-node src/database/seed.js",
-    "sync": "npm run babel-node src/database/sync.js"
+    "sync": "npm run babel-node src/database/sync.js",
+    "clean": "rm -rf build && mkdir build",
+    "build-server": "npx babel -d ./build ./src -s",
+    "build": "npm run clean && npm run build-server",
+    "start": "node ./build/index.js"
   },
   "dependencies": {
     "apollo-server-express": "^2.22.2",
@@ -23,7 +26,8 @@
     "sequelize": "^6.6.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.13.14",
+    "@babel/cli": "^7.13.16",
+    "@babel/core": "^7.13.16",
     "@babel/node": "^7.13.13",
     "@babel/preset-env": "^7.13.12",
     "chalk": "^3.0.0",
