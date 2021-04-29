@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import database from '../database';
 
 const subjects = [
@@ -55,8 +56,18 @@ const labels = [
   'Term6',
 ];
 
-(async () => {
-  await database.models.subject.bulkCreate(subjects.map((subject) => ({ subject_name: subject })));
-
-  await database.models.label.bulkCreate(labels.map((label) => ({ label_name: label })));
-})();
+database.models.user
+  .create(
+    {
+      full_name: 'admin',
+      username: 'admin',
+      password: '$2b$12$.T.t8SeK2MyAeBvZAoirQOYGVZBAFKO2VyiFQ/Jedf/0JQD5CtVwC',
+      role: {
+        role_name: 'Admin',
+      },
+    },
+    {
+      include: database.models.role,
+    }
+  )
+  .then(console.log);

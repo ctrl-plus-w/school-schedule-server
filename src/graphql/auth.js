@@ -20,19 +20,21 @@ export const typeDefs = gql`
     role: String!
     full_name: String!
     token: String!
+    subjects: [Subject]!
+    labels: [Label]!
   }
 `;
 
 export const resolvers = {
   Mutation: {
     login: async (_parent, args) => {
-      const user = await userShortcut.findByUsername(args.username, [database.models.role]);
+      const user = await userShortcut.findByUsername(args.username, [database.models.role, database.models.label, database.models.subject]);
       if (!user) throw new AuthenticationError(errors.BAD_CREDENTIAL);
 
       const isPasswordValid = await bcrypt.compare(args.password, user.password);
       if (!isPasswordValid) throw new AuthenticationError(errors.BAD_CREDENTIAL);
 
-      const payload = { id: user.id, role: user.role.role_name, full_name: user.full_name };
+      const payload = { id: user.id, role: user.role.role_name, full_name: user.full_name, subjects: user.subjects, labels: user.labels };
       const options = { expiresIn: `${config.JWT_TOKEN_EXPIRATION}h` };
 
       const token = jwt.sign(payload, config.JWT_KEY, options);
@@ -48,6 +50,8 @@ export const resolvers = {
         role: context.role,
         full_name: context.full_name,
         token: context.token,
+        labels: context.labels,
+        subjects: context.subjects,
       };
     },
   },

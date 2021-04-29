@@ -20,6 +20,8 @@ export default async ({ req }) => {
       role: decodedToken.role,
       full_name: decodedToken.full_name,
       token: token,
+      subjects: decodedToken.subjects,
+      labels: decodedToken.labels,
     };
   } catch (err) {
     return { auth: false };

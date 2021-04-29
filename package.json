@@ -5,17 +5,18 @@
   "scripts": {
     "dev": "nodemon --exec 'clear && npm run babel-node src/index.js'",
     "babel-node": "babel-node --presets='@babel/preset-env' --ignore='foo|bar|baz'",
-    "seed": "npm run babel-node src/database/seed.js",
-    "sync": "npm run babel-node src/database/sync.js",
     "clean": "rm -rf build && mkdir build",
     "build-server": "npx babel -d ./build ./src -s",
     "build": "npm run clean && npm run build-server",
-    "start": "node ./build/index.js"
+    "start": "node ./build/index.js",
+    "seed": "node ./build/database/seed.js",
+    "sync": "node ./build/database/sync.js"
   },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
     "apollo-server-express": "^2.22.2",
     "bcrypt": "^5.0.1",
+    "core-js": "^3.11.0",
     "cors": "^2.8.5",
     "express": "~4.16.1",
     "express-graphql": "^0.12.0",
