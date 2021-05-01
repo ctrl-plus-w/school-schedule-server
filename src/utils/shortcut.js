@@ -1,7 +1,5 @@
 import { Op } from 'sequelize';
 
-import { resetTime } from '../utils/date';
-
 import database from '../database';
 
 class shortcutModel {
@@ -190,17 +188,6 @@ export class event extends shortcutModel {
   static get model() {
     return 'event';
   }
-
-  /**
-   * Get the two week interval for the database request.
-   */
-  static get startInterval() {
-    const startDate = resetTime(new Date());
-    const endDate = new Date(new Date().setDate(new Date().getDate() + 14));
-
-    return { [Op.between]: [startDate, endDate] };
-  }
-
   /**
    * Get all the events which aren't deleted in the two weeks interval.
    * @param {string} start The start date from when the events should be fetched.
@@ -227,7 +214,7 @@ export class event extends shortcutModel {
    */
   static findAllBy(conditions, includes = []) {
     return new Promise((resolve, reject) => {
-      this.findAllWithCondition({ ...conditions, start: this.startInterval, deleted_at: null }, includes)
+      this.findAllWithCondition({ ...conditions, deleted_at: null }, includes)
         .then(resolve)
         .catch(reject);
     });
