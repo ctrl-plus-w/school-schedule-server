@@ -22,15 +22,15 @@ import database from '../database';
 export const typeDefs = gql`
   extend type Query {
     event(id: ID!): Event
-    events: [Event!]
+    events(start: String!, end: String!): [Event!]
 
     allEvents: [Event!]
 
-    userEvents: [Event!]
-    ownedEvents: [Event!]
+    userEvents(start: String!, end: String!): [Event!]
+    ownedEvents(start: String!, end: String!): [Event!]
 
-    labelEvents(id: ID!): [Event!]
-    labelRelatedEvents(id: ID!): [Event!]
+    labelEvents(id: ID!, start: String!, end: String!): [Event!]
+    labelRelatedEvents(id: ID!, start: String!, end: String!): [Event!]
   }
 
   extend type Mutation {
@@ -73,8 +73,8 @@ export const resolvers = {
       return eventObject(event);
     },
 
-    events: async () => {
-      const events = await eventShortcut.findAll();
+    events: async (_, args) => {
+      const events = await eventShortcut.findAll(args.start, args.end);
       return events.map(eventObject);
     },
 
@@ -83,7 +83,7 @@ export const resolvers = {
       return events.map(eventObject);
     },
 
-    userEvents: async (_parent, _args, context) => {
+    userEvents: async (_parent, args, context) => {
       if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
 
       const user = await userShortcut.find(context.id, database.models.label);
@@ -91,17 +91,17 @@ export const resolvers = {
 
       const userLabelIds = user.labels.map((label) => label.id);
 
-      const events = await eventShortcut.findAllByLabelIds(userLabelIds);
+      const events = await eventShortcut.findAllByLabelIds(userLabelIds, args.start, args.end);
       return events.map(eventObject);
     },
 
-    ownedEvents: async (_parent, _args, context) => {
+    ownedEvents: async (_parent, args, context) => {
       if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
 
       const user = await userShortcut.findWithRole(context.id);
       await checkIsProfessor(user);
 
-      const userOwnedEvents = await eventShortcut.findAll({ model: database.models.user, where: { id: context.id } });
+      const userOwnedEvents = await eventShortcut.findAll(args.start, args.end, { model: database.models.user, where: { id: context.id } });
       return userOwnedEvents.map(eventObject);
     },
 
@@ -111,7 +111,7 @@ export const resolvers = {
       const user = await userShortcut.findWithRole(context.id);
       await checkIsProfessor(user);
 
-      const labelEvents = await eventShortcut.findAll({ model: database.models.label, where: { id: args.id } });
+      const labelEvents = await eventShortcut.findAll(args.start, args.end, { model: database.models.label, where: { id: args.id } });
       return labelEvents.map(eventObject);
     },
 
@@ -132,7 +132,7 @@ export const resolvers = {
 
       const labelsId = labels.map((l) => l.id);
 
-      const events = await eventShortcut.findAll({ model: database.models.label, where: { id: labelsId } });
+      const events = await eventShortcut.findAll(args.start, args.end, { model: database.models.label, where: { id: labelsId } });
       return events.map(eventObject);
     },
   },

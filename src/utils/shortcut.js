@@ -203,12 +203,14 @@ export class event extends shortcutModel {
 
   /**
    * Get all the events which aren't deleted in the two weeks interval.
+   * @param {string} start The start date from when the events should be fetched.
+   * @param {string} end The end date from when the events should be fetched.
    * @param {array} includes The models it should include.
    * @returns An array of event objects.
    */
-  static findAll(includes = []) {
-    const startDate = resetTime(new Date());
-    const endDate = new Date(new Date().setDate(new Date().getDate() + 14));
+  static findAll(start, end, includes = []) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
 
     return new Promise((resolve, reject) => {
       return this.findAllWithCondition({ start: { [Op.between]: [startDate, endDate] }, deleted_at: null }, includes)
@@ -234,12 +236,17 @@ export class event extends shortcutModel {
   /**
    * Get all the events where the label is in the given array which aren't deleted.
    * @param {array} labelIds The array of labels ids.
+   * @param {string} start The start date from when the events should be fetched.
+   * @param {string} end The end date from when the events should be fetched.
    * @param {array} includes The models it should include.
    * @returns An array of event objects.
    */
-  static findAllByLabelIds(labelIds, includes = []) {
+  static findAllByLabelIds(labelIds, start, end, includes = []) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
     return new Promise((resolve, reject) => {
-      this.findAllBy({ labelId: { [Op.in]: labelIds } }, includes)
+      this.findAllBy({ labelId: { [Op.in]: labelIds }, start: { [Op.between]: [startDate, endDate] } }, includes)
         .then(resolve)
         .catch(reject);
     });
