@@ -87,7 +87,7 @@ export const resolvers = {
       if (!context?.id) throw new AuthenticationError(errors.NOT_LOGGED);
 
       const user = await userShortcut.find(context.id, database.models.label);
-      if (!user) throw new AuthenticationError(errors.DEFAULT);
+      if (!user) throw new AuthenticationError(errors.USER_NOT_FOUND);
 
       const userLabelIds = user.labels.map((label) => label.id);
 
@@ -150,28 +150,28 @@ export const resolvers = {
 
       const startDate = moment(new Date(args.start));
       const now = moment(Date.now());
-      if (startDate.isBefore(now)) throw new UserInputError(errors.DEFAULT);
+      if (startDate.isBefore(now)) throw new UserInputError(errors.EVENT_IN_PAST);
 
       const user = await userShortcut.findWithRole(context.id, [database.models.subject]);
       await checkIsProfessor(user);
 
       const subject = await subjectShortcut.find(args.subject_id);
-      if (!subject) throw new Error(errors.DEFAULT);
+      if (!subject) throw new Error(errors.SUBJECT_NOT_FOUND);
 
       const userOwnSubject = await user.hasSubject(subject);
-      if (!userOwnSubject) throw new Error(errors.DEFAULT);
+      if (!userOwnSubject) throw new Error(errors.NOT_SUBJECT_OWNER);
 
       const userOwnedEvents = await eventShortcut.findAll({ model: database.models.user, where: { id: context.id } });
       if (userOwnedEvents > 0) throw new UserInputError(errors.EVENT_TAKEN);
 
       const label = await labelShortcut.find(args.label_id, [database.models.user]);
-      if (!label) throw new UserInputError(errors.DEFAULT);
+      if (!label) throw new UserInputError(errors.LABEL_NOT_FOUND);
 
       // Select every user which the label contains.
       const labelUserIds = await label.users.map((user) => user.id);
 
       // SQL Request select id of every user which have an event which start at the given start time.
-      const sql = `SELECT User.id FROM Event JOIN Label ON Event.label_id = Label.id JOIN UserLabels ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE Event.start = "${startDate.toISOString()}"`;
+      const sql = `SELECT User.id FROM Event JOIN Label ON Event.label_id = Label.id JOIN UserLabels ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE Event.start = "${startDate.toISOString()}" AND Event.deleted_at IS NULL`;
       const request = await database.query(sql, { type: QueryTypes.SELECT });
 
       const userIdsFromLabels = request.map((user) => user.id);
@@ -202,7 +202,7 @@ export const resolvers = {
       await checkIsProfessor(loggedUser);
 
       const event = await eventShortcut.find(args.id, [database.models.user]);
-      if (!event) throw new UserInputError(errors.DEFAULT);
+      if (!event) throw new UserInputError(errors.EVENT_NOT_FOUND);
 
       const userIsOwner = event.user.id === loggedUser.id;
       if (!userIsOwner) throw new ForbiddenError(errors.NOT_EVENT_OWNER);
@@ -222,7 +222,7 @@ export const resolvers = {
       await checkIsProfessor(loggedUser);
 
       const event = await eventShortcut.find(args.id, [database.models.user]);
-      if (!event) throw new UserInputError(errors.DEFAULT);
+      if (!event) throw new UserInputError(errors.EVENT_NOT_FOUND);
 
       const userIsOwner = event.user.id === loggedUser.id;
       if (!userIsOwner) throw new ForbiddenError(errors.NOT_EVENT_OWNER);
@@ -238,7 +238,7 @@ export const resolvers = {
       await checkIsAdmin(loggedUser);
 
       const event = await eventShortcut.findDeleted(args.id, [database.models.user]);
-      if (!event) throw new UserInputError(errors.DEFAULT);
+      if (!event) throw new UserInputError(errors.EVENT_NOT_FOUND);
 
       await event.destroy();
       return true;
