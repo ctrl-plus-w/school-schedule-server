@@ -171,7 +171,7 @@ export const resolvers = {
       const labelUserIds = await label.users.map((user) => user.id);
 
       // SQL Request select id of every user which have an event which start at the given start time.
-      const sql = `SELECT User.id FROM Event JOIN Label ON Event.label_id = Label.id JOIN UserLabels ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE Event.start = "${startDate.toISOString()} AND Event.deleted_at IS NULL"`;
+      const sql = `SELECT User.id FROM Event JOIN Label ON Event.label_id = Label.id JOIN UserLabels ON UserLabels.label_id = Label.id JOIN User ON UserLabels.user_id = User.id WHERE Event.start = "${startDate.toISOString()}" AND Event.deleted_at IS NULL`;
       const request = await database.query(sql, { type: QueryTypes.SELECT });
 
       const userIdsFromLabels = request.map((user) => user.id);
