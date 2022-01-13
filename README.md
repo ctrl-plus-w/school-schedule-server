@@ -23,13 +23,15 @@ npm install <package_name>
 npm run install
 ```
 
-4. Build the server
+4. Create a .env file like the .env.example file
+
+5. Build the server
 
 ```
 heroku local build
 ```
 
-5. Start the server
+6. Start the server
 
 ```
 heroku local web
