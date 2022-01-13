@@ -29,6 +29,12 @@ npm run install
 heroku local build
 ```
 
+5. Start the server
+
+```
+heroku local web
+```
+
 # Installation Informations
 
 | Roles       |
