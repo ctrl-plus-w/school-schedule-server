@@ -13,6 +13,11 @@
     "sync": "node ./build/database/sync.js"
   },
   "dependencies": {
+    "@babel/cli": "^7.17.6",
+    "@babel/core": "^7.17.8",
+    "@babel/node": "^7.16.8",
+    "@babel/polyfill": "^7.12.1",
+    "@babel/preset-env": "^7.16.11",
     "apollo-server-express": "^2.22.2",
     "bcrypt": "^5.0.1",
     "core-js": "^3.11.0",
@@ -27,11 +32,6 @@
     "sequelize": "^6.6.2"
   },
   "devDependencies": {
-    "@babel/cli": "^7.17.6",
-    "@babel/core": "^7.17.8",
-    "@babel/node": "^7.16.8",
-    "@babel/polyfill": "^7.12.1",
-    "@babel/preset-env": "^7.16.11",
     "chalk": "^3.0.0",
     "eslint": "^7.24.0",
     "morgan": "^1.10.0",
